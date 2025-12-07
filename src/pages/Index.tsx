@@ -1,12 +1,46 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { MobileNav } from "@/components/layout/MobileNav";
+import { DashboardView } from "@/views/DashboardView";
+import { FacilitiesView } from "@/views/FacilitiesView";
+import { WorkersView } from "@/views/WorkersView";
+import { FaultsView } from "@/views/FaultsView";
+import { ReportsView } from "@/views/ReportsView";
+import { StatsView } from "@/views/StatsView";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  const renderView = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardView />;
+      case 'facilities':
+        return <FacilitiesView />;
+      case 'workers':
+        return <WorkersView />;
+      case 'faults':
+        return <FaultsView />;
+      case 'reports':
+        return <ReportsView />;
+      case 'stats':
+        return <StatsView />;
+      default:
+        return <DashboardView />;
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="flex">
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <main className="flex-1 p-4 md:p-6 pb-20 lg:pb-6">
+          {renderView()}
+        </main>
       </div>
+      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
