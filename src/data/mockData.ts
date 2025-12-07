@@ -129,48 +129,6 @@ export const mockReports: BriefReport[] = [
     timestamp: new Date('2024-12-05T16:00:00'),
     authorId: '1',
   },
-  {
-    id: 'r5',
-    facilityId: '1',
-    note: 'Routine maintenance check completed. Fire extinguishers inspected.',
-    timestamp: new Date('2024-12-04T11:30:00'),
-    authorId: '4',
-  },
-  {
-    id: 'r6',
-    facilityId: '3',
-    note: 'Gym equipment safety inspection passed. Minor adjustments made to treadmills.',
-    timestamp: new Date('2024-12-04T14:00:00'),
-    authorId: '5',
-  },
-  {
-    id: 'r7',
-    facilityId: '2',
-    note: 'Lab ventilation system cleaned and tested.',
-    timestamp: new Date('2024-12-03T09:00:00'),
-    authorId: '5',
-  },
-  {
-    id: 'r8',
-    facilityId: '4',
-    note: 'Security cameras checked. Two cameras need replacement.',
-    timestamp: new Date('2024-12-03T16:30:00'),
-    authorId: '3',
-  },
-  {
-    id: 'r9',
-    facilityId: '1',
-    note: 'HVAC filters replaced in all classrooms.',
-    timestamp: new Date('2024-12-02T10:15:00'),
-    authorId: '5',
-  },
-  {
-    id: 'r10',
-    facilityId: '3',
-    note: 'Pool chemical levels adjusted. All readings normal.',
-    timestamp: new Date('2024-12-01T08:45:00'),
-    authorId: '5',
-  },
 ];
 
 // Generate 30 days of stats
