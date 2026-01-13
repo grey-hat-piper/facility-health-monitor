@@ -14,7 +14,128 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      facilities: {
+        Row: {
+          created_at: string
+          health_percentage: number
+          id: string
+          location: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          health_percentage?: number
+          id?: string
+          location: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          health_percentage?: number
+          id?: string
+          location?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      facility_components: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          last_inspection: string
+          name: string
+          status: Database["public"]["Enums"]["component_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          last_inspection?: string
+          name: string
+          status?: Database["public"]["Enums"]["component_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          last_inspection?: string
+          name?: string
+          status?: Database["public"]["Enums"]["component_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_components_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faults: {
+        Row: {
+          assigned_worker_id: string | null
+          component_id: string | null
+          created_at: string
+          description: string
+          facility_id: string
+          id: string
+          images: string[] | null
+          reported_at: string
+          status: Database["public"]["Enums"]["fault_status"]
+          type: Database["public"]["Enums"]["fault_type"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_worker_id?: string | null
+          component_id?: string | null
+          created_at?: string
+          description: string
+          facility_id: string
+          id?: string
+          images?: string[] | null
+          reported_at?: string
+          status?: Database["public"]["Enums"]["fault_status"]
+          type: Database["public"]["Enums"]["fault_type"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_worker_id?: string | null
+          component_id?: string | null
+          created_at?: string
+          description?: string
+          facility_id?: string
+          id?: string
+          images?: string[] | null
+          reported_at?: string
+          status?: Database["public"]["Enums"]["fault_status"]
+          type?: Database["public"]["Enums"]["fault_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faults_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "facility_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faults_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +144,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      component_status: "good" | "repairs" | "faulty"
+      fault_status: "open" | "in-progress" | "resolved"
+      fault_type:
+        | "electrical"
+        | "plumbing"
+        | "security"
+        | "inspection"
+        | "carpentry"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +278,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      component_status: ["good", "repairs", "faulty"],
+      fault_status: ["open", "in-progress", "resolved"],
+      fault_type: [
+        "electrical",
+        "plumbing",
+        "security",
+        "inspection",
+        "carpentry",
+      ],
+    },
   },
 } as const
