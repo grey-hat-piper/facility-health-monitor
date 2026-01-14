@@ -1,10 +1,14 @@
-import { Worker } from "@/types/facilities";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
+import type { Worker } from "@/hooks/useWorkers";
 
 interface WorkerCardProps {
   worker: Worker;
+  onTogglePresence?: (id: string, isPresent: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
 const roleLabels: Record<string, string> = {
@@ -23,7 +27,7 @@ const roleColors: Record<string, string> = {
   maintenance: 'bg-slate-100 text-slate-800',
 };
 
-export const WorkerCard = ({ worker }: WorkerCardProps) => {
+export const WorkerCard = ({ worker, onTogglePresence, onDelete }: WorkerCardProps) => {
   const initials = worker.name.split(' ').map(n => n[0]).join('');
 
   return (
@@ -37,7 +41,7 @@ export const WorkerCard = ({ worker }: WorkerCardProps) => {
         <span
           className={cn(
             "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card",
-            worker.isPresent ? "bg-status-healthy" : "bg-muted"
+            worker.is_present ? "bg-status-healthy" : "bg-muted"
           )}
         />
       </div>
@@ -50,9 +54,29 @@ export const WorkerCard = ({ worker }: WorkerCardProps) => {
           {roleLabels[worker.role]}
         </Badge>
       </div>
-      <Badge variant={worker.isPresent ? "healthy" : "neutral"} className="text-xs">
-        {worker.isPresent ? "Present" : "Away"}
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "text-xs h-7 px-2",
+            worker.is_present ? "text-status-healthy" : "text-muted-foreground"
+          )}
+          onClick={() => onTogglePresence?.(worker.id, !worker.is_present)}
+        >
+          {worker.is_present ? "Present" : "Away"}
+        </Button>
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            onClick={() => onDelete(worker.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

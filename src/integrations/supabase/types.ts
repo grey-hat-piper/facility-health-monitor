@@ -136,6 +136,36 @@ export type Database = {
           },
         ]
       }
+      workers: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          is_present: boolean
+          name: string
+          role: Database["public"]["Enums"]["worker_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_present?: boolean
+          name: string
+          role: Database["public"]["Enums"]["worker_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_present?: boolean
+          name?: string
+          role?: Database["public"]["Enums"]["worker_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -152,6 +182,12 @@ export type Database = {
         | "security"
         | "inspection"
         | "carpentry"
+      worker_role:
+        | "electrician"
+        | "plumber"
+        | "security"
+        | "inspector"
+        | "maintenance"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -287,6 +323,13 @@ export const Constants = {
         "security",
         "inspection",
         "carpentry",
+      ],
+      worker_role: [
+        "electrician",
+        "plumber",
+        "security",
+        "inspector",
+        "maintenance",
       ],
     },
   },
