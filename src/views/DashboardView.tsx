@@ -4,7 +4,8 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { HealthIndicator } from "@/components/dashboard/HealthIndicator";
 import { useFacilities, FacilityWithComponents } from "@/hooks/useFacilities";
 import { useFaults, DbFault } from "@/hooks/useFaults";
-import { mockWorkers, mockReports } from "@/data/mockData";
+import { useWorkers } from "@/hooks/useWorkers";
+import { mockReports } from "@/data/mockData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Zap, Droplets, Shield, ClipboardCheck, Hammer, Clock } from "lucide-react";
@@ -42,8 +43,9 @@ const statusVariants: Record<string, 'critical' | 'warning' | 'healthy'> = {
 export const DashboardView = () => {
   const { data: facilities, isLoading: facilitiesLoading } = useFacilities();
   const { data: faults, isLoading: faultsLoading } = useFaults();
+  const { data: workers = [], isLoading: workersLoading } = useWorkers();
 
-  const isLoading = facilitiesLoading || faultsLoading;
+  const isLoading = facilitiesLoading || faultsLoading || workersLoading;
 
   if (isLoading) {
     return (
@@ -63,7 +65,7 @@ export const DashboardView = () => {
   const totalHealth = facilities && facilities.length > 0
     ? Math.round(facilities.reduce((acc, f) => acc + f.health_percentage, 0) / facilities.length)
     : 100;
-  const presentWorkers = mockWorkers.filter(w => w.isPresent).length;
+  const presentWorkers = workers.filter(w => w.is_present).length;
   const openFaults = faults?.filter(f => f.status === 'open').length || 0;
   const inProgressFaults = faults?.filter(f => f.status === 'in-progress').length || 0;
 
@@ -167,7 +169,7 @@ export const DashboardView = () => {
         />
         <StatCard
           title="Workers Present"
-          value={`${presentWorkers}/${mockWorkers.length}`}
+          value={`${presentWorkers}/${workers.length}`}
           icon={Users}
           variant="healthy"
           subtitle="On duty today"

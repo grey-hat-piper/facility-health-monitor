@@ -1,18 +1,141 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { WorkerCard } from "@/components/dashboard/WorkerCard";
-import { mockWorkers } from "@/data/mockData";
-import { Users, UserCheck, UserX } from "lucide-react";
+import { useWorkers, useCreateWorker, useDeleteWorker, useToggleWorkerPresence } from "@/hooks/useWorkers";
+import { Users, UserCheck, UserX, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+type WorkerRole = Database['public']['Enums']['worker_role'];
+
+const roles: { value: WorkerRole; label: string }[] = [
+  { value: 'electrician', label: 'Electrician' },
+  { value: 'plumber', label: 'Plumber' },
+  { value: 'security', label: 'Security' },
+  { value: 'inspector', label: 'Inspector' },
+  { value: 'maintenance', label: 'Maintenance' },
+];
 
 export const WorkersView = () => {
-  const presentWorkers = mockWorkers.filter(w => w.isPresent);
-  const absentWorkers = mockWorkers.filter(w => !w.isPresent);
+  const { data: workers = [], isLoading } = useWorkers();
+  const createWorker = useCreateWorker();
+  const deleteWorker = useDeleteWorker();
+  const togglePresence = useToggleWorkerPresence();
+  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newWorkerName, setNewWorkerName] = useState("");
+  const [newWorkerRole, setNewWorkerRole] = useState<WorkerRole>("maintenance");
+
+  const presentWorkers = workers.filter(w => w.is_present);
+  const absentWorkers = workers.filter(w => !w.is_present);
+
+  const handleCreateWorker = async () => {
+    if (!newWorkerName.trim()) {
+      toast.error("Please enter a name");
+      return;
+    }
+
+    try {
+      await createWorker.mutateAsync({
+        name: newWorkerName.trim(),
+        role: newWorkerRole,
+        is_present: false,
+      });
+      toast.success("Worker added successfully");
+      setNewWorkerName("");
+      setNewWorkerRole("maintenance");
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to add worker");
+    }
+  };
+
+  const handleDeleteWorker = async (id: string) => {
+    try {
+      await deleteWorker.mutateAsync(id);
+      toast.success("Worker removed");
+    } catch (error) {
+      toast.error("Failed to remove worker");
+    }
+  };
+
+  const handleTogglePresence = async (id: string, isPresent: boolean) => {
+    try {
+      await togglePresence.mutateAsync({ id, isPresent });
+      toast.success(isPresent ? "Worker marked as present" : "Worker marked as away");
+    } catch (error) {
+      toast.error("Failed to update presence");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Workers</h2>
-        <p className="text-muted-foreground">Track worker presence and assignments</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Workers</h2>
+          <p className="text-muted-foreground">Track worker presence and assignments</p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Worker
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Worker</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name</label>
+                <Input
+                  placeholder="Enter worker name"
+                  value={newWorkerName}
+                  onChange={(e) => setNewWorkerName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Role</label>
+                <Select value={newWorkerRole} onValueChange={(v) => setNewWorkerRole(v as WorkerRole)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={handleCreateWorker}
+                disabled={createWorker.isPending}
+              >
+                {createWorker.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Add Worker
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Summary */}
@@ -23,7 +146,7 @@ export const WorkersView = () => {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{mockWorkers.length}</p>
+              <p className="text-2xl font-bold">{workers.length}</p>
               <p className="text-xs text-muted-foreground">Total Workers</p>
             </div>
           </CardContent>
@@ -62,11 +185,19 @@ export const WorkersView = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
-          {presentWorkers.map((worker, index) => (
-            <div key={worker.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-              <WorkerCard worker={worker} />
-            </div>
-          ))}
+          {presentWorkers.length === 0 ? (
+            <p className="text-muted-foreground text-sm col-span-2">No workers present</p>
+          ) : (
+            presentWorkers.map((worker, index) => (
+              <div key={worker.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+                <WorkerCard 
+                  worker={worker} 
+                  onTogglePresence={handleTogglePresence}
+                  onDelete={handleDeleteWorker}
+                />
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -83,7 +214,11 @@ export const WorkersView = () => {
           <CardContent className="grid gap-3 sm:grid-cols-2">
             {absentWorkers.map((worker, index) => (
               <div key={worker.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                <WorkerCard worker={worker} />
+                <WorkerCard 
+                  worker={worker} 
+                  onTogglePresence={handleTogglePresence}
+                  onDelete={handleDeleteWorker}
+                />
               </div>
             ))}
           </CardContent>
