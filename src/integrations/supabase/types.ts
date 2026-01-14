@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_users: {
+        Row: {
+          created_at: string
+          id: string
+          last_login: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_login?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_login?: string
+          username?: string
+        }
+        Relationships: []
+      }
       facilities: {
         Row: {
           created_at: string

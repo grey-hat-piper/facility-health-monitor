@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Zap, Droplets, Shield, ClipboardCheck, Hammer, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { FaultType } from "@/types/facilities";
+import { useAuth } from "@/contexts/AuthContext";
 
 const statusIcons = {
   good: <CheckCircle2 className="h-4 w-4" />,
@@ -41,6 +42,7 @@ const statusVariants: Record<string, 'critical' | 'warning' | 'healthy'> = {
 };
 
 export const DashboardView = () => {
+  const { user } = useAuth();
   const { data: facilities, isLoading: facilitiesLoading } = useFacilities();
   const { data: faults, isLoading: faultsLoading } = useFaults();
   const { data: workers = [], isLoading: workersLoading } = useWorkers();
@@ -137,7 +139,7 @@ export const DashboardView = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Dashboard</h2>
+        <h2 className="text-2xl font-bold">Welcome, {user?.username || 'Guest'}</h2>
         <p className="text-muted-foreground">Overview of all facilities and operations</p>
       </div>
 
