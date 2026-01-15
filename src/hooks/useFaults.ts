@@ -13,6 +13,7 @@ export interface DbFault {
   assigned_worker_id: string | null;
   status: 'open' | 'in-progress' | 'resolved';
   images: string[] | null;
+  custom_fault_type: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +43,7 @@ export const useCreateFault = () => {
       component_id?: string;
       type: FaultType;
       description: string;
+      custom_fault_type?: string;
     }) => {
       const { data: fault, error } = await supabase
         .from('faults')

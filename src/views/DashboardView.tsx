@@ -8,7 +8,7 @@ import { useWorkers } from "@/hooks/useWorkers";
 import { mockReports } from "@/data/mockData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Zap, Droplets, Shield, ClipboardCheck, Hammer, Clock } from "lucide-react";
+import { MapPin, Zap, Droplets, Shield, Bath, Hammer, Clock, HelpCircle } from "lucide-react";
 import { format } from "date-fns";
 import { FaultType } from "@/types/facilities";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,16 +23,18 @@ const faultIcons: Record<FaultType, React.ReactNode> = {
   electrical: <Zap className="h-4 w-4" />,
   plumbing: <Droplets className="h-4 w-4" />,
   security: <Shield className="h-4 w-4" />,
-  inspection: <ClipboardCheck className="h-4 w-4" />,
+  sanitary: <Bath className="h-4 w-4" />,
   carpentry: <Hammer className="h-4 w-4" />,
+  other: <HelpCircle className="h-4 w-4" />,
 };
 
 const faultColors: Record<FaultType, string> = {
   electrical: 'bg-amber-500',
   plumbing: 'bg-blue-500',
   security: 'bg-purple-500',
-  inspection: 'bg-emerald-500',
+  sanitary: 'bg-emerald-500',
   carpentry: 'bg-orange-500',
+  other: 'bg-gray-500',
 };
 
 const statusVariants: Record<string, 'critical' | 'warning' | 'healthy'> = {
@@ -111,30 +113,36 @@ export const DashboardView = () => {
     </Card>
   );
 
-  const FaultItemSmall = ({ fault }: { fault: DbFault }) => (
-    <div className="p-3 rounded-lg border bg-card">
-      <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-lg text-primary-foreground ${faultColors[fault.type]}`}>
-          {faultIcons[fault.type]}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm capitalize">{fault.type}</span>
-            <Badge variant={statusVariants[fault.status]} className="text-xs capitalize">
-              {fault.status.replace('-', ' ')}
-            </Badge>
+  const FaultItemSmall = ({ fault }: { fault: DbFault }) => {
+    const displayType = fault.type === 'other' && fault.custom_fault_type 
+      ? fault.custom_fault_type 
+      : fault.type;
+    
+    return (
+      <div className="p-3 rounded-lg border bg-card">
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg text-primary-foreground ${faultColors[fault.type]}`}>
+            {faultIcons[fault.type]}
           </div>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-            {fault.description}
-          </p>
-          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{format(new Date(fault.reported_at), 'MMM d, h:mm a')}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-sm capitalize">{displayType}</span>
+              <Badge variant={statusVariants[fault.status]} className="text-xs capitalize">
+                {fault.status.replace('-', ' ')}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+              {fault.description}
+            </p>
+            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>{format(new Date(fault.reported_at), 'MMM d, h:mm a')}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">

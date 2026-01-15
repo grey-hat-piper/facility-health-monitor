@@ -1,4 +1,4 @@
-export type FaultType = 'electrical' | 'plumbing' | 'security' | 'inspection' | 'carpentry';
+export type FaultType = 'electrical' | 'plumbing' | 'security' | 'sanitary' | 'carpentry' | 'other';
 
 export type ComponentStatus = 'good' | 'repairs' | 'faulty';
 
