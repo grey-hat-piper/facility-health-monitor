@@ -16,7 +16,10 @@ const roleLabels: Record<string, string> = {
   plumber: 'Plumber',
   security: 'Security',
   inspector: 'Inspector',
-  maintenance: 'Maintenance',
+  carpenter: 'Carpenter',
+  janitor: 'Janitor',
+  grounds: 'Grounds',
+  other: 'Other',
 };
 
 const roleColors: Record<string, string> = {
@@ -24,7 +27,10 @@ const roleColors: Record<string, string> = {
   plumber: 'bg-blue-100 text-blue-800',
   security: 'bg-purple-100 text-purple-800',
   inspector: 'bg-emerald-100 text-emerald-800',
-  maintenance: 'bg-slate-100 text-slate-800',
+  carpenter: 'bg-orange-100 text-orange-800',
+  janitor: 'bg-teal-100 text-teal-800',
+  grounds: 'bg-green-100 text-green-800',
+  other: 'bg-slate-100 text-slate-800',
 };
 
 export const WorkerCard = ({ worker, onTogglePresence, onDelete }: WorkerCardProps) => {
@@ -51,7 +57,9 @@ export const WorkerCard = ({ worker, onTogglePresence, onDelete }: WorkerCardPro
           variant="outline" 
           className={cn("text-xs mt-1", roleColors[worker.role])}
         >
-          {roleLabels[worker.role]}
+          {worker.role === 'other' && worker.custom_role 
+            ? worker.custom_role 
+            : roleLabels[worker.role]}
         </Badge>
       </div>
       <div className="flex items-center gap-2">

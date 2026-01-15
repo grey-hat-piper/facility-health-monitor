@@ -18,7 +18,10 @@ const roles: { value: WorkerRole; label: string }[] = [
   { value: 'plumber', label: 'Plumber' },
   { value: 'security', label: 'Security' },
   { value: 'inspector', label: 'Inspector' },
-  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'carpenter', label: 'Carpenter' },
+  { value: 'janitor', label: 'Janitor' },
+  { value: 'grounds', label: 'Grounds' },
+  { value: 'other', label: 'Other' },
 ];
 
 export const WorkersView = () => {
@@ -29,7 +32,8 @@ export const WorkersView = () => {
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWorkerName, setNewWorkerName] = useState("");
-  const [newWorkerRole, setNewWorkerRole] = useState<WorkerRole>("maintenance");
+  const [newWorkerRole, setNewWorkerRole] = useState<WorkerRole>("carpenter");
+  const [customRole, setCustomRole] = useState("");
 
   const presentWorkers = workers.filter(w => w.is_present);
   const absentWorkers = workers.filter(w => !w.is_present);
@@ -45,10 +49,12 @@ export const WorkersView = () => {
         name: newWorkerName.trim(),
         role: newWorkerRole,
         is_present: false,
+        custom_role: newWorkerRole === 'other' ? customRole.trim() : null,
       });
       toast.success("Worker added successfully");
       setNewWorkerName("");
-      setNewWorkerRole("maintenance");
+      setNewWorkerRole("carpenter");
+      setCustomRole("");
       setIsDialogOpen(false);
     } catch (error) {
       toast.error("Failed to add worker");
@@ -123,6 +129,16 @@ export const WorkersView = () => {
                   </SelectContent>
                 </Select>
               </div>
+              {newWorkerRole === 'other' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Custom Role</label>
+                  <Input
+                    placeholder="Specify role"
+                    value={customRole}
+                    onChange={(e) => setCustomRole(e.target.value)}
+                  />
+                </div>
+              )}
               <Button 
                 className="w-full" 
                 onClick={handleCreateWorker}

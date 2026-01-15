@@ -161,6 +161,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          custom_role: string | null
           id: string
           is_present: boolean
           name: string
@@ -170,6 +171,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          custom_role?: string | null
           id?: string
           is_present?: boolean
           name: string
@@ -179,6 +181,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          custom_role?: string | null
           id?: string
           is_present?: boolean
           name?: string
@@ -208,7 +211,10 @@ export type Database = {
         | "plumber"
         | "security"
         | "inspector"
-        | "maintenance"
+        | "carpenter"
+        | "janitor"
+        | "grounds"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -350,7 +356,10 @@ export const Constants = {
         "plumber",
         "security",
         "inspector",
-        "maintenance",
+        "carpenter",
+        "janitor",
+        "grounds",
+        "other",
       ],
     },
   },
