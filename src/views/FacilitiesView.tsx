@@ -69,7 +69,12 @@ export const FacilitiesView = () => {
     e.preventDefault();
     if (!selectedFacility) return;
     createComponent.mutate({ facility_id: selectedFacility.id, ...componentForm }, {
-      onSuccess: () => {
+      onSuccess: (newComponent) => {
+        // Update the selectedFacility with the new component
+        setSelectedFacility(prev => prev ? {
+          ...prev,
+          components: [...prev.components, newComponent as DbFacilityComponent]
+        } : null);
         setIsAddComponentDialogOpen(false);
         setComponentForm({ name: '', status: 'good' });
       },
@@ -80,7 +85,14 @@ export const FacilitiesView = () => {
     e.preventDefault();
     if (!editingComponent) return;
     updateComponent.mutate({ id: editingComponent.id, ...componentForm }, {
-      onSuccess: () => {
+      onSuccess: (updatedComponent) => {
+        // Update the selectedFacility with the updated component
+        setSelectedFacility(prev => prev ? {
+          ...prev,
+          components: prev.components.map(c => 
+            c.id === editingComponent.id ? updatedComponent as DbFacilityComponent : c
+          )
+        } : null);
         setEditingComponent(null);
         setComponentForm({ name: '', status: 'good' });
       },
@@ -94,7 +106,15 @@ export const FacilitiesView = () => {
         onSuccess: () => setSelectedFacility(null),
       });
     } else {
-      deleteComponent.mutate(deleteConfirm.id);
+      deleteComponent.mutate(deleteConfirm.id, {
+        onSuccess: () => {
+          // Update the selectedFacility by removing the deleted component
+          setSelectedFacility(prev => prev ? {
+            ...prev,
+            components: prev.components.filter(c => c.id !== deleteConfirm.id)
+          } : null);
+        },
+      });
     }
     setDeleteConfirm(null);
   };
