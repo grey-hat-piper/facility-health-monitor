@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFaults, useCreateFault, useUpdateFault, useDeleteFault, DbFault } from "@/hooks/useFaults";
 import { useFacilities } from "@/hooks/useFacilities";
 import { FaultType } from "@/types/facilities";
-import { AlertTriangle, Clock, CheckCircle2, Plus, Zap, Droplets, Shield, ClipboardCheck, Hammer, Edit, Trash2 } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, Plus, Zap, Droplets, Shield, Bath, Hammer, Edit, Trash2, HelpCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,21 +15,24 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { useFacilityComponents, DbFacilityComponent } from "@/hooks/useFacilities";
 
 const faultIcons: Record<FaultType, React.ReactNode> = {
   electrical: <Zap className="h-4 w-4" />,
   plumbing: <Droplets className="h-4 w-4" />,
   security: <Shield className="h-4 w-4" />,
-  inspection: <ClipboardCheck className="h-4 w-4" />,
+  sanitary: <Bath className="h-4 w-4" />,
   carpentry: <Hammer className="h-4 w-4" />,
+  other: <HelpCircle className="h-4 w-4" />,
 };
 
 const faultColors: Record<FaultType, string> = {
   electrical: 'bg-amber-500',
   plumbing: 'bg-blue-500',
   security: 'bg-purple-500',
-  inspection: 'bg-emerald-500',
+  sanitary: 'bg-emerald-500',
   carpentry: 'bg-orange-500',
+  other: 'bg-gray-500',
 };
 
 const statusVariants: Record<string, 'critical' | 'warning' | 'healthy'> = {
@@ -50,14 +53,29 @@ export const FaultsView = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     facility_id: '',
+    component_id: '',
     type: '' as FaultType | '',
     description: '',
     status: 'open' as 'open' | 'in-progress' | 'resolved',
+    custom_fault_type: '',
   });
+
+  const { data: components } = useFacilityComponents(formData.facility_id || null);
   
   const openFaults = faults?.filter(f => f.status === 'open') || [];
   const inProgressFaults = faults?.filter(f => f.status === 'in-progress') || [];
   const resolvedFaults = faults?.filter(f => f.status === 'resolved') || [];
+
+  const resetForm = () => {
+    setFormData({ 
+      facility_id: '', 
+      component_id: '', 
+      type: '', 
+      description: '', 
+      status: 'open',
+      custom_fault_type: '',
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,12 +83,14 @@ export const FaultsView = () => {
     
     createFault.mutate({
       facility_id: formData.facility_id,
+      component_id: formData.component_id || undefined,
       type: formData.type,
       description: formData.description,
+      custom_fault_type: formData.type === 'other' ? formData.custom_fault_type : undefined,
     }, {
       onSuccess: () => {
         setIsDialogOpen(false);
-        setFormData({ facility_id: '', type: '', description: '', status: 'open' });
+        resetForm();
       },
     });
   };
@@ -86,7 +106,7 @@ export const FaultsView = () => {
     }, {
       onSuccess: () => {
         setEditingFault(null);
-        setFormData({ facility_id: '', type: '', description: '', status: 'open' });
+        resetForm();
       },
     });
   };
@@ -94,9 +114,11 @@ export const FaultsView = () => {
   const openEditFault = (fault: DbFault) => {
     setFormData({
       facility_id: fault.facility_id,
+      component_id: fault.component_id || '',
       type: fault.type,
       description: fault.description,
       status: fault.status,
+      custom_fault_type: fault.custom_fault_type || '',
     });
     setEditingFault(fault);
   };
@@ -130,41 +152,47 @@ export const FaultsView = () => {
     );
   }
 
-  const FaultCard = ({ fault }: { fault: DbFault }) => (
-    <div className="p-4 rounded-lg border bg-card hover:shadow-sm transition-all">
-      <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-lg text-primary-foreground ${faultColors[fault.type]}`}>
-          {faultIcons[fault.type]}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm capitalize">{fault.type}</span>
-            <Badge variant={statusVariants[fault.status]} className="text-xs capitalize">
-              {fault.status.replace('-', ' ')}
-            </Badge>
+  const FaultCard = ({ fault }: { fault: DbFault }) => {
+    const displayType = fault.type === 'other' && fault.custom_fault_type 
+      ? fault.custom_fault_type 
+      : fault.type;
+    
+    return (
+      <div className="p-4 rounded-lg border bg-card hover:shadow-sm transition-all">
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg text-primary-foreground ${faultColors[fault.type]}`}>
+            {faultIcons[fault.type]}
           </div>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-            {fault.description}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            📍 {getFacilityName(fault.facility_id)}
-          </p>
-          <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{format(new Date(fault.reported_at), 'MMM d, h:mm a')}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-sm capitalize">{displayType}</span>
+              <Badge variant={statusVariants[fault.status]} className="text-xs capitalize">
+                {fault.status.replace('-', ' ')}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              {fault.description}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              📍 {getFacilityName(fault.facility_id)}
+            </p>
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>{format(new Date(fault.reported_at), 'MMM d, h:mm a')}</span>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => openEditFault(fault)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(fault.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => openEditFault(fault)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(fault.id)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -188,7 +216,7 @@ export const FaultsView = () => {
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label>Facility</Label>
-                <Select value={formData.facility_id} onValueChange={v => setFormData(prev => ({ ...prev, facility_id: v }))}>
+                <Select value={formData.facility_id} onValueChange={v => setFormData(prev => ({ ...prev, facility_id: v, component_id: '' }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select facility" />
                   </SelectTrigger>
@@ -201,6 +229,24 @@ export const FaultsView = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.facility_id && components && components.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Component (optional)</Label>
+                  <Select value={formData.component_id} onValueChange={v => setFormData(prev => ({ ...prev, component_id: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select component" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {components.map(component => (
+                        <SelectItem key={component.id} value={component.id}>
+                          {component.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label>Fault Type</Label>
@@ -212,11 +258,24 @@ export const FaultsView = () => {
                     <SelectItem value="electrical">Electrical</SelectItem>
                     <SelectItem value="plumbing">Plumbing</SelectItem>
                     <SelectItem value="security">Security</SelectItem>
-                    <SelectItem value="inspection">Inspection</SelectItem>
+                    <SelectItem value="sanitary">Sanitary</SelectItem>
                     <SelectItem value="carpentry">Carpentry</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.type === 'other' && (
+                <div className="space-y-2">
+                  <Label>Specify Fault Type</Label>
+                  <Input
+                    value={formData.custom_fault_type}
+                    onChange={e => setFormData(prev => ({ ...prev, custom_fault_type: e.target.value }))}
+                    placeholder="Enter specific fault type..."
+                    required
+                  />
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label>Description</Label>

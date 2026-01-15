@@ -1,6 +1,6 @@
 import { Fault, FaultType } from "@/types/facilities";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Droplets, Shield, ClipboardCheck, Clock, Hammer } from "lucide-react";
+import { Zap, Droplets, Shield, Bath, Clock, Hammer, HelpCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface FaultItemProps {
@@ -12,16 +12,18 @@ const faultIcons: Record<FaultType, React.ReactNode> = {
   electrical: <Zap className="h-4 w-4" />,
   plumbing: <Droplets className="h-4 w-4" />,
   security: <Shield className="h-4 w-4" />,
-  inspection: <ClipboardCheck className="h-4 w-4" />,
+  sanitary: <Bath className="h-4 w-4" />,
   carpentry: <Hammer className="h-4 w-4" />,
+  other: <HelpCircle className="h-4 w-4" />,
 };
 
 const faultColors: Record<FaultType, string> = {
   electrical: 'bg-amber-500',
   plumbing: 'bg-blue-500',
   security: 'bg-purple-500',
-  inspection: 'bg-emerald-500',
+  sanitary: 'bg-emerald-500',
   carpentry: 'bg-orange-500',
+  other: 'bg-gray-500',
 };
 
 const statusVariants: Record<string, 'critical' | 'warning' | 'healthy'> = {

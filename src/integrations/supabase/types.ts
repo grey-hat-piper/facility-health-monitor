@@ -105,6 +105,7 @@ export type Database = {
           assigned_worker_id: string | null
           component_id: string | null
           created_at: string
+          custom_fault_type: string | null
           description: string
           facility_id: string
           id: string
@@ -118,6 +119,7 @@ export type Database = {
           assigned_worker_id?: string | null
           component_id?: string | null
           created_at?: string
+          custom_fault_type?: string | null
           description: string
           facility_id: string
           id?: string
@@ -131,6 +133,7 @@ export type Database = {
           assigned_worker_id?: string | null
           component_id?: string | null
           created_at?: string
+          custom_fault_type?: string | null
           description?: string
           facility_id?: string
           id?: string
@@ -204,8 +207,9 @@ export type Database = {
         | "electrical"
         | "plumbing"
         | "security"
-        | "inspection"
+        | "sanitary"
         | "carpentry"
+        | "other"
       worker_role:
         | "electrician"
         | "plumber"
@@ -348,8 +352,9 @@ export const Constants = {
         "electrical",
         "plumbing",
         "security",
-        "inspection",
+        "sanitary",
         "carpentry",
+        "other",
       ],
       worker_role: [
         "electrician",
