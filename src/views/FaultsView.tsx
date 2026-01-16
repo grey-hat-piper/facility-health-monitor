@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFaults, useCreateFault, useUpdateFault, useDeleteFault, DbFault } from "@/hooks/useFaults";
 import { useFacilities } from "@/hooks/useFacilities";
 import { FaultType } from "@/types/facilities";
-import { AlertTriangle, Clock, CheckCircle2, Plus, Zap, Droplets, Shield, Bath, Hammer, Edit, Trash2, HelpCircle } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, Plus, Zap, Droplets, Shield, Bath, Hammer, Edit, Trash2, HelpCircle, Cuboid } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,7 @@ const faultIcons: Record<FaultType, React.ReactNode> = {
   security: <Shield className="h-4 w-4" />,
   sanitary: <Bath className="h-4 w-4" />,
   carpentry: <Hammer className="h-4 w-4" />,
+  masonry: <Cuboid className="h-4 w-4" />,
   other: <HelpCircle className="h-4 w-4" />,
 };
 
@@ -32,6 +33,7 @@ const faultColors: Record<FaultType, string> = {
   security: 'bg-purple-500',
   sanitary: 'bg-emerald-500',
   carpentry: 'bg-orange-500',
+  masonry: 'bg-stone-500',
   other: 'bg-gray-500',
 };
 
@@ -260,6 +262,7 @@ export const FaultsView = () => {
                     <SelectItem value="security">Security</SelectItem>
                     <SelectItem value="sanitary">Sanitary</SelectItem>
                     <SelectItem value="carpentry">Carpentry</SelectItem>
+                    <SelectItem value="masonry">Masonry</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>

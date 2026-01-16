@@ -210,6 +210,7 @@ export type Database = {
         | "sanitary"
         | "carpentry"
         | "other"
+        | "masonry"
       worker_role:
         | "electrician"
         | "plumber"
@@ -355,6 +356,7 @@ export const Constants = {
         "sanitary",
         "carpentry",
         "other",
+        "masonry",
       ],
       worker_role: [
         "electrician",
