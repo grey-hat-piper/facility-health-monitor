@@ -2,26 +2,41 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReportItem } from "@/components/dashboard/ReportItem";
-import { mockReports, mockFacilities } from "@/data/mockData";
-import { FileText, Plus, Upload } from "lucide-react";
+import { FileText, Plus, Upload, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useReports, useCreateReport } from "@/hooks/useReports";
+import { useFacilities } from "@/hooks/useFacilities";
 
 export const ReportsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+  const [selectedFacility, setSelectedFacility] = useState<string>("");
+  const [note, setNote] = useState("");
+
+  const { data: reports, isLoading: reportsLoading } = useReports();
+  const { data: facilities, isLoading: facilitiesLoading } = useFacilities();
+  const createReport = useCreateReport();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Report Added",
-      description: "Your brief report has been saved.",
+    if (!note.trim()) return;
+
+    createReport.mutate({
+      facility_id: selectedFacility || null,
+      note: note.trim(),
+      image_url: null,
+    }, {
+      onSuccess: () => {
+        setIsDialogOpen(false);
+        setSelectedFacility("");
+        setNote("");
+      }
     });
-    setIsDialogOpen(false);
   };
+
+  const isLoading = reportsLoading || facilitiesLoading;
 
   return (
     <div className="space-y-6">
@@ -44,13 +59,13 @@ export const ReportsView = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label>Facility</Label>
-                <Select>
+                <Label>Facility (optional)</Label>
+                <Select value={selectedFacility} onValueChange={setSelectedFacility}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select facility" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockFacilities.map(facility => (
+                    {facilities?.map(facility => (
                       <SelectItem key={facility.id} value={facility.id}>
                         {facility.name}
                       </SelectItem>
@@ -64,6 +79,9 @@ export const ReportsView = () => {
                 <Textarea 
                   placeholder="Write a brief note about the condition or work done..." 
                   rows={4}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  required
                 />
               </div>
               
@@ -77,7 +95,16 @@ export const ReportsView = () => {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full">Save Report</Button>
+              <Button type="submit" className="w-full" disabled={createReport.isPending}>
+                {createReport.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Report"
+                )}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -92,18 +119,33 @@ export const ReportsView = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {mockReports.map((report, index) => (
-            <div 
-              key={report.id} 
-              className="animate-slide-up" 
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <ReportItem 
-                report={report} 
-                facilityName={mockFacilities.find(f => f.id === report.facilityId)?.name}
-              />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          ))}
+          ) : reports && reports.length > 0 ? (
+            reports.map((report, index) => (
+              <div 
+                key={report.id} 
+                className="animate-slide-up" 
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <ReportItem 
+                  report={{
+                    id: report.id,
+                    facilityId: report.facility_id || '',
+                    note: report.note,
+                    timestamp: new Date(report.created_at),
+                  }} 
+                  facilityName={facilities?.find(f => f.id === report.facility_id)?.name}
+                />
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              No reports yet. Add your first report!
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
