@@ -1,4 +1,4 @@
-import { Bell, Settings, Building2, LogOut } from "lucide-react";
+import { Bell, FileText, Building2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,8 +38,8 @@ export const Header = () => {
               3
             </Badge>
           </Button>
-          <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="lg:hidden">
+            <FileText className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
             <LogOut className="h-5 w-5" />

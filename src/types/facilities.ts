@@ -46,7 +46,7 @@ export interface BriefReport {
   componentId?: string;
   note: string;
   timestamp: Date;
-  authorId: string;
+  authorId?: string;
   images?: string[];
 }
 
