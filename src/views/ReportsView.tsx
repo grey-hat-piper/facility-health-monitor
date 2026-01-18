@@ -1,42 +1,116 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReportItem } from "@/components/dashboard/ReportItem";
-import { FileText, Plus, Upload, Loader2 } from "lucide-react";
+import { FileText, Plus, Upload, Loader2, X, Image } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useReports, useCreateReport } from "@/hooks/useReports";
 import { useFacilities } from "@/hooks/useFacilities";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const ReportsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<string>("");
   const [note, setNote] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { data: reports, isLoading: reportsLoading } = useReports();
   const { data: facilities, isLoading: facilitiesLoading } = useFacilities();
   const createReport = useCreateReport();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image under 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `reports/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from('report-images')
+      .upload(filePath, file);
+
+    if (error) {
+      throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('report-images')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!note.trim()) return;
 
-    createReport.mutate({
-      facility_id: selectedFacility || null,
-      note: note.trim(),
-      image_url: null,
-    }, {
-      onSuccess: () => {
-        setIsDialogOpen(false);
-        setSelectedFacility("");
-        setNote("");
+    setIsUploading(true);
+    try {
+      let imageUrl: string | null = null;
+      
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage);
       }
-    });
+
+      createReport.mutate({
+        facility_id: selectedFacility || null,
+        note: note.trim(),
+        image_url: imageUrl,
+      }, {
+        onSuccess: () => {
+          setIsDialogOpen(false);
+          setSelectedFacility("");
+          setNote("");
+          removeImage();
+        }
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const isLoading = reportsLoading || facilitiesLoading;
+  const isSubmitting = createReport.isPending || isUploading;
 
   return (
     <div className="space-y-6">
@@ -87,19 +161,51 @@ export const ReportsView = () => {
               
               <div className="space-y-2">
                 <Label>Attach Image (optional)</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Click to upload or drag and drop
-                  </p>
-                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                {imagePreview ? (
+                  <div className="relative rounded-lg overflow-hidden border">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-40 object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={removeImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div 
+                    className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Image className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Max 5MB
+                    </p>
+                  </div>
+                )}
               </div>
               
-              <Button type="submit" className="w-full" disabled={createReport.isPending}>
-                {createReport.isPending ? (
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    {isUploading ? "Uploading..." : "Saving..."}
                   </>
                 ) : (
                   "Save Report"
@@ -136,6 +242,7 @@ export const ReportsView = () => {
                     facilityId: report.facility_id || '',
                     note: report.note,
                     timestamp: new Date(report.created_at),
+                    imageUrl: report.image_url || undefined,
                   }} 
                   facilityName={facilities?.find(f => f.id === report.facility_id)?.name}
                 />

@@ -48,6 +48,7 @@ export interface BriefReport {
   timestamp: Date;
   authorId?: string;
   images?: string[];
+  imageUrl?: string;
 }
 
 export interface DailyStats {

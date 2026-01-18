@@ -1,5 +1,5 @@
 import { BriefReport } from "@/types/facilities";
-import { FileText, Clock } from "lucide-react";
+import { FileText, Clock, Image } from "lucide-react";
 import { format } from "date-fns";
 
 interface ReportItemProps {
@@ -16,6 +16,16 @@ export const ReportItem = ({ report, facilityName }: ReportItemProps) => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm">{report.note}</p>
+          {report.imageUrl && (
+            <div className="mt-3 rounded-lg overflow-hidden border">
+              <img 
+                src={report.imageUrl} 
+                alt="Report attachment" 
+                className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => window.open(report.imageUrl, '_blank')}
+              />
+            </div>
+          )}
           {facilityName && (
             <p className="text-xs text-muted-foreground mt-2">
               📍 {facilityName}
