@@ -115,6 +115,28 @@ export const DashboardView = () => {
     </Card>
   );
 
+  const getComponentName = (componentId: string | null) => {
+    if (!componentId || !facilities) return null;
+    for (const facility of facilities) {
+      const component = facility.components.find(c => c.id === componentId);
+      if (component) return component.name;
+    }
+    return null;
+  };
+
+  const getFacilityName = (facilityId: string) => {
+    return facilities?.find(f => f.id === facilityId)?.name || 'Unknown';
+  };
+
+  const getLocationDisplay = (facilityId: string, componentId: string | null) => {
+    const facilityName = getFacilityName(facilityId);
+    const componentName = getComponentName(componentId);
+    if (componentName) {
+      return `${facilityName?.toUpperCase()}, ${componentName.toUpperCase()}`;
+    }
+    return facilityName;
+  };
+
   const FaultItemSmall = ({ fault }: { fault: DbFault }) => {
     const displayType = fault.type === 'other' && fault.custom_fault_type 
       ? fault.custom_fault_type 
@@ -135,6 +157,9 @@ export const DashboardView = () => {
             </div>
             <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
               {fault.description}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              📍 {getLocationDisplay(fault.facility_id, fault.component_id)}
             </p>
             <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />

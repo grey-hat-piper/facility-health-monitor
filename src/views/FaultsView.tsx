@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFaults, useCreateFault, useUpdateFault, useDeleteFault, DbFault } from "@/hooks/useFaults";
-import { useFacilities } from "@/hooks/useFacilities";
+import { useFacilities, useFacilityComponents, DbFacilityComponent } from "@/hooks/useFacilities";
 import { FaultType } from "@/types/facilities";
 import { AlertTriangle, Clock, CheckCircle2, Plus, Zap, Droplets, Shield, Bath, Hammer, Edit, Trash2, HelpCircle, Cuboid } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -15,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { useFacilityComponents, DbFacilityComponent } from "@/hooks/useFacilities";
+import { supabase } from "@/integrations/supabase/client";
 
 const faultIcons: Record<FaultType, React.ReactNode> = {
   electrical: <Zap className="h-4 w-4" />,
@@ -62,7 +63,20 @@ export const FaultsView = () => {
     custom_fault_type: '',
   });
 
-  const { data: components } = useFacilityComponents(formData.facility_id || null);
+  // Fetch components for the selected facility in the form
+  const { data: formComponents } = useFacilityComponents(formData.facility_id || null);
+
+  // Fetch all components for location display
+  const { data: allComponents } = useQuery({
+    queryKey: ['all_facility_components'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('facility_components')
+        .select('*');
+      if (error) throw error;
+      return data as DbFacilityComponent[];
+    },
+  });
   
   const openFaults = faults?.filter(f => f.status === 'open') || [];
   const inProgressFaults = faults?.filter(f => f.status === 'in-progress') || [];
@@ -135,6 +149,20 @@ export const FaultsView = () => {
     return facilities?.find(f => f.id === facilityId)?.name || 'Unknown';
   };
 
+  const getComponentName = (componentId: string | null) => {
+    if (!componentId) return null;
+    return allComponents?.find(c => c.id === componentId)?.name || null;
+  };
+
+  const getLocationDisplay = (facilityId: string, componentId: string | null) => {
+    const facilityName = getFacilityName(facilityId);
+    const componentName = getComponentName(componentId);
+    if (componentName) {
+      return `${facilityName?.toUpperCase()}, ${componentName.toUpperCase()}`;
+    }
+    return facilityName;
+  };
+
   const isLoading = faultsLoading || facilitiesLoading;
 
   if (isLoading) {
@@ -175,8 +203,8 @@ export const FaultsView = () => {
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
               {fault.description}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              📍 {getFacilityName(fault.facility_id)}
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              📍 {getLocationDisplay(fault.facility_id, fault.component_id)}
             </p>
             <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
@@ -232,7 +260,7 @@ export const FaultsView = () => {
                 </Select>
               </div>
 
-              {formData.facility_id && components && components.length > 0 && (
+              {formData.facility_id && formComponents && formComponents.length > 0 && (
                 <div className="space-y-2">
                   <Label>Component (optional)</Label>
                   <Select value={formData.component_id} onValueChange={v => setFormData(prev => ({ ...prev, component_id: v }))}>
@@ -240,7 +268,7 @@ export const FaultsView = () => {
                       <SelectValue placeholder="Select component" />
                     </SelectTrigger>
                     <SelectContent>
-                      {components.map(component => (
+                      {formComponents.map(component => (
                         <SelectItem key={component.id} value={component.id}>
                           {component.name}
                         </SelectItem>

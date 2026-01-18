@@ -1,4 +1,4 @@
-import { Bell, FileText, Building2, LogOut } from "lucide-react";
+import { Bell, FileText, Building2, LogOut, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +32,9 @@ export const Header = () => {
               {user.username}
             </span>
           )}
+          <Button variant="ghost" size="icon">
+            <CalendarDays className="h-5 w-5" />
+          </Button>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs" variant="critical">
