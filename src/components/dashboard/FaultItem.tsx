@@ -6,6 +6,7 @@ import { format } from "date-fns";
 interface FaultItemProps {
   fault: Fault;
   facilityName?: string;
+  componentName?: string;
 }
 
 const faultIcons: Record<FaultType, React.ReactNode> = {
@@ -34,7 +35,12 @@ const statusVariants: Record<string, 'critical' | 'warning' | 'healthy'> = {
   'resolved': 'healthy',
 };
 
-export const FaultItem = ({ fault, facilityName }: FaultItemProps) => {
+export const FaultItem = ({ fault, facilityName, componentName }: FaultItemProps) => {
+  // Format location string: "FACILITY, COMPONENT" or just "FACILITY"
+  const locationDisplay = componentName 
+    ? `${facilityName?.toUpperCase()}, ${componentName.toUpperCase()}`
+    : facilityName;
+
   return (
     <div className="p-4 rounded-lg border bg-card hover:shadow-sm transition-all">
       <div className="flex items-start gap-3">
@@ -51,9 +57,9 @@ export const FaultItem = ({ fault, facilityName }: FaultItemProps) => {
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
             {fault.description}
           </p>
-          {facilityName && (
-            <p className="text-xs text-muted-foreground mt-1">
-              📍 {facilityName}
+          {locationDisplay && (
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              📍 {locationDisplay}
             </p>
           )}
           <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">

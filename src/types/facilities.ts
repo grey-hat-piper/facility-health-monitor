@@ -47,6 +47,7 @@ export interface BriefReport {
   note: string;
   timestamp: Date;
   authorId?: string;
+  reportedBy?: string;
   images?: string[];
   imageUrl?: string;
 }

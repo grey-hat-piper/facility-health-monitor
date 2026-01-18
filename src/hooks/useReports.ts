@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Tables, TablesInsert } from '@/integrations/supabase/types';
+import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 export type Report = Tables<'reports'>;
 export type ReportInsert = Omit<TablesInsert<'reports'>, 'id' | 'created_at' | 'updated_at'>;
+export type ReportUpdate = Omit<TablesUpdate<'reports'>, 'id' | 'created_at' | 'updated_at'>;
 
 export const useReports = () => {
   return useQuery({
@@ -47,6 +48,39 @@ export const useCreateReport = () => {
       toast({
         title: 'Error',
         description: 'Failed to create report: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useUpdateReport = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & ReportUpdate) => {
+      const { data: report, error } = await supabase
+        .from('reports')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return report;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+      toast({
+        title: 'Report Updated',
+        description: 'Changes saved successfully.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update report: ' + error.message,
         variant: 'destructive',
       });
     },
