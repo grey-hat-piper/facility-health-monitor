@@ -4,7 +4,7 @@ import {
   Building, 
   Users, 
   AlertTriangle, 
-  FileText 
+  BarChart3 
 } from "lucide-react";
 
 interface MobileNavProps {
@@ -17,7 +17,7 @@ const navItems = [
   { id: 'facilities', label: 'Facilities', icon: Building },
   { id: 'workers', label: 'Workers', icon: Users },
   { id: 'faults', label: 'Faults', icon: AlertTriangle },
-  { id: 'reports', label: 'Reports', icon: FileText },
+  { id: 'stats', label: 'Stats', icon: BarChart3 },
 ];
 
 export const MobileNav = ({ activeTab, onTabChange }: MobileNavProps) => {

@@ -8,6 +8,7 @@ import { WorkersView } from "@/views/WorkersView";
 import { FaultsView } from "@/views/FaultsView";
 import { ReportsView } from "@/views/ReportsView";
 import { StatsView } from "@/views/StatsView";
+import { CalendarView } from "@/views/CalendarView";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -26,14 +27,20 @@ const Index = () => {
         return <ReportsView />;
       case 'stats':
         return <StatsView />;
+      case 'calendar':
+        return <CalendarView />;
       default:
         return <DashboardView />;
     }
   };
 
+  const handleCalendarClick = () => {
+    setActiveTab('calendar');
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header onCalendarClick={handleCalendarClick} />
       <div className="flex">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
         <main className="flex-1 p-4 md:p-6 pb-20 lg:pb-6">

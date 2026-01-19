@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useCreateActivityLog } from "@/hooks/useActivityLogs";
+import { useAuth } from "@/contexts/AuthContext";
 
 const faultIcons: Record<FaultType, React.ReactNode> = {
   electrical: <Zap className="h-4 w-4" />,
@@ -50,6 +52,8 @@ export const FaultsView = () => {
   const createFault = useCreateFault();
   const updateFault = useUpdateFault();
   const deleteFault = useDeleteFault();
+  const createActivityLog = useCreateActivityLog();
+  const { user } = useAuth();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFault, setEditingFault] = useState<DbFault | null>(null);
@@ -93,9 +97,12 @@ export const FaultsView = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.facility_id || !formData.type) return;
+    
+    const facilityName = getFacilityName(formData.facility_id);
+    const componentName = formData.component_id ? getComponentName(formData.component_id) : undefined;
     
     createFault.mutate({
       facility_id: formData.facility_id,
@@ -104,9 +111,34 @@ export const FaultsView = () => {
       description: formData.description,
       custom_fault_type: formData.type === 'other' ? formData.custom_fault_type : undefined,
     }, {
-      onSuccess: () => {
+      onSuccess: async (newFault) => {
         setIsDialogOpen(false);
         resetForm();
+        
+        // Log activity
+        createActivityLog.mutate({
+          event_type: 'fault_created',
+          event_description: `New ${formData.type} fault reported at ${facilityName}${componentName ? `, ${componentName}` : ''}: ${formData.description.substring(0, 50)}...`,
+          entity_type: 'fault',
+          entity_id: newFault?.id,
+          created_by: user?.username,
+        });
+
+        // Send email notification to all users
+        try {
+          await supabase.functions.invoke('notify-fault', {
+            body: {
+              faultType: formData.type,
+              description: formData.description,
+              facilityName: facilityName,
+              componentName: componentName,
+              reportedBy: user?.username,
+            },
+          });
+          console.log('Notification sent to all users');
+        } catch (error) {
+          console.error('Failed to send notifications:', error);
+        }
       },
     });
   };
@@ -121,6 +153,15 @@ export const FaultsView = () => {
       status: formData.status,
     }, {
       onSuccess: () => {
+        // Log activity
+        createActivityLog.mutate({
+          event_type: 'fault_updated',
+          event_description: `Fault status changed to ${formData.status} at ${getFacilityName(editingFault.facility_id)}`,
+          entity_type: 'fault',
+          entity_id: editingFault.id,
+          created_by: user?.username,
+        });
+        
         setEditingFault(null);
         resetForm();
       },

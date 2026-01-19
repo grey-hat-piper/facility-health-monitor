@@ -8,7 +8,7 @@ import {
   FileText, 
   BarChart3,
   Mail,
-  Settings
+  CalendarDays
 } from "lucide-react";
 
 interface SidebarProps {
@@ -22,7 +22,8 @@ const navItems = [
   { id: 'workers', label: 'Workers', icon: Users },
   { id: 'faults', label: 'Faults', icon: AlertTriangle },
   { id: 'reports', label: 'Reports', icon: FileText },
-  { id: 'stats', label: '30-Day Stats', icon: BarChart3 },
+  { id: 'stats', label: 'Stats', icon: BarChart3 },
+  { id: 'calendar', label: 'Calendar', icon: CalendarDays },
 ];
 
 export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
