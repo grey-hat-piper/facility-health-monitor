@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 interface User {
   id: string;
   username: string;
+  email?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (username: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     if (password !== CORRECT_PASSWORD) {
       return { success: false, error: 'Invalid password' };
     }
@@ -39,8 +40,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, error: 'Username is required' };
     }
 
+    if (!email.trim()) {
+      return { success: false, error: 'Email is required' };
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return { success: false, error: 'Please enter a valid email address' };
+    }
+
     try {
-      // Check if user exists
+      // Check if user exists by username
       const { data: existingUser, error: fetchError } = await supabase
         .from('app_users')
         .select('*')
@@ -52,23 +63,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       let userData: User;
 
       if (existingUser) {
-        // Update last login
+        // Update last login and email
         await supabase
           .from('app_users')
-          .update({ last_login: new Date().toISOString() })
+          .update({ 
+            last_login: new Date().toISOString(),
+            email: email.trim()
+          })
           .eq('id', existingUser.id);
         
-        userData = { id: existingUser.id, username: existingUser.username };
+        userData = { id: existingUser.id, username: existingUser.username, email: email.trim() };
       } else {
-        // Create new user
+        // Create new user with email
         const { data: newUser, error: insertError } = await supabase
           .from('app_users')
-          .insert({ username: username.trim() })
+          .insert({ 
+            username: username.trim(),
+            email: email.trim()
+          })
           .select()
           .single();
 
         if (insertError) throw insertError;
-        userData = { id: newUser.id, username: newUser.username };
+        userData = { id: newUser.id, username: newUser.username, email: newUser.email };
       }
 
       setUser(userData);

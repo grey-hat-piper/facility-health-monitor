@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 const Login = () => {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -19,7 +20,7 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await login(username, password);
+    const result = await login(username, email, password);
     
     if (result.success) {
       toast.success('Welcome to FacilityHub!');
@@ -53,6 +54,17 @@ const Login = () => {
                 placeholder="Enter your name"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>

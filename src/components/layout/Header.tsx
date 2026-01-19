@@ -1,10 +1,14 @@
-import { Bell, FileText, Building2, LogOut, CalendarDays } from "lucide-react";
+import { Bell, Building2, LogOut, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-export const Header = () => {
+interface HeaderProps {
+  onCalendarClick?: () => void;
+}
+
+export const Header = ({ onCalendarClick }: HeaderProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +36,7 @@ export const Header = () => {
               {user.username}
             </span>
           )}
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={onCalendarClick} title="Calendar">
             <CalendarDays className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon" className="relative">
@@ -40,9 +44,6 @@ export const Header = () => {
             <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs" variant="critical">
               3
             </Badge>
-          </Button>
-          <Button variant="ghost" size="icon" className="lg:hidden">
-            <FileText className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
             <LogOut className="h-5 w-5" />
