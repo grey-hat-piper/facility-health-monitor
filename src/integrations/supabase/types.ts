@@ -14,21 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_id: string | null
+          entity_type: string
+          event_description: string
+          event_type: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string | null
+          entity_type: string
+          event_description: string
+          event_type: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          event_description?: string
+          event_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       app_users: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           last_login: string
           username: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id?: string
           last_login?: string
           username: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           last_login?: string
           username?: string
