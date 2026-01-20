@@ -1,20 +1,51 @@
-import { Bell, Building2, LogOut, CalendarDays } from "lucide-react";
+import { Bell, Building2, LogOut, CalendarDays, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useActivityLogs } from "@/hooks/useActivityLogs";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface HeaderProps {
   onCalendarClick?: () => void;
+  onReportsClick?: () => void;
 }
 
-export const Header = ({ onCalendarClick }: HeaderProps) => {
+export const Header = ({ onCalendarClick, onReportsClick }: HeaderProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { data: activityLogs } = useActivityLogs();
+
+  // Get recent notifications (last 10 activity logs)
+  const notifications = activityLogs?.slice(0, 10) || [];
+  const unreadCount = Math.min(notifications.length, 9);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const getEventIcon = (eventType: string) => {
+    switch (eventType) {
+      case 'fault_created':
+        return '🔴';
+      case 'fault_resolved':
+        return '✅';
+      case 'worker_added':
+        return '👷';
+      case 'facility_updated':
+        return '🏢';
+      case 'report_created':
+        return '📝';
+      default:
+        return '📌';
+    }
   };
 
   return (
@@ -36,15 +67,65 @@ export const Header = ({ onCalendarClick }: HeaderProps) => {
               {user.username}
             </span>
           )}
+          
+          {/* Reports icon - mobile only */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onReportsClick} 
+            title="Reports"
+            className="lg:hidden"
+          >
+            <FileText className="h-5 w-5" />
+          </Button>
+          
           <Button variant="ghost" size="icon" onClick={onCalendarClick} title="Calendar">
             <CalendarDays className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs" variant="critical">
-              3
-            </Badge>
-          </Button>
+          
+          {/* Notifications popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs" variant="destructive">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="p-3 border-b">
+                <h4 className="font-semibold text-sm">Notifications</h4>
+                <p className="text-xs text-muted-foreground">Recent activity in your facility</p>
+              </div>
+              <ScrollArea className="h-[300px]">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground text-sm">
+                    No notifications yet
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {notifications.map((log) => (
+                      <div key={log.id} className="p-3 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start gap-2">
+                          <span className="text-lg">{getEventIcon(log.event_type)}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{log.event_description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(log.created_at), 'MMM d, h:mm a')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+          
           <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
             <LogOut className="h-5 w-5" />
           </Button>
