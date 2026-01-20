@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useCreateActivityLog } from "@/hooks/useActivityLogs";
 
 export const ReportsView = () => {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export const ReportsView = () => {
   const createReport = useCreateReport();
   const updateReport = useUpdateReport();
   const deleteReport = useDeleteReport();
+  const createActivityLog = useCreateActivityLog();
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,13 +102,24 @@ export const ReportsView = () => {
         imageUrl = await uploadImage(selectedImage);
       }
 
+      const facilityName = facilities?.find(f => f.id === selectedFacility)?.name || 'General';
+      
       createReport.mutate({
         facility_id: selectedFacility || null,
         note: note.trim(),
         image_url: imageUrl,
         reported_by: user?.username || null,
       }, {
-        onSuccess: () => {
+        onSuccess: (newReport) => {
+          // Log activity
+          createActivityLog.mutate({
+            event_type: 'report_created',
+            event_description: `New report added for ${facilityName}: ${note.trim().substring(0, 50)}...`,
+            entity_type: 'report',
+            entity_id: newReport?.id,
+            created_by: user?.username,
+          });
+          
           setIsDialogOpen(false);
           resetForm();
         }

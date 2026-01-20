@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCreateActivityLog } from "@/hooks/useActivityLogs";
 
 const statusIcons = {
   good: <CheckCircle2 className="h-4 w-4" />,
@@ -33,6 +34,7 @@ export const FacilitiesView = () => {
   const createComponent = useCreateComponent();
   const updateComponent = useUpdateComponent();
   const deleteComponent = useDeleteComponent();
+  const createActivityLog = useCreateActivityLog();
 
   const [selectedFacility, setSelectedFacility] = useState<FacilityWithComponents | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -47,7 +49,15 @@ export const FacilitiesView = () => {
   const handleCreateFacility = (e: React.FormEvent) => {
     e.preventDefault();
     createFacility.mutate(formData, {
-      onSuccess: () => {
+      onSuccess: (newFacility) => {
+        // Log activity
+        createActivityLog.mutate({
+          event_type: 'facility_created',
+          event_description: `New facility added: ${formData.name} at ${formData.location}`,
+          entity_type: 'facility',
+          entity_id: newFacility?.id,
+        });
+        
         setIsCreateDialogOpen(false);
         setFormData({ name: '', location: '' });
       },
@@ -59,6 +69,14 @@ export const FacilitiesView = () => {
     if (!selectedFacility) return;
     updateFacility.mutate({ id: selectedFacility.id, ...formData }, {
       onSuccess: () => {
+        // Log activity
+        createActivityLog.mutate({
+          event_type: 'facility_updated',
+          event_description: `Facility updated: ${formData.name}`,
+          entity_type: 'facility',
+          entity_id: selectedFacility.id,
+        });
+        
         setIsEditDialogOpen(false);
         setSelectedFacility(null);
       },
@@ -70,6 +88,14 @@ export const FacilitiesView = () => {
     if (!selectedFacility) return;
     createComponent.mutate({ facility_id: selectedFacility.id, ...componentForm }, {
       onSuccess: (newComponent) => {
+        // Log activity
+        createActivityLog.mutate({
+          event_type: 'component_added',
+          event_description: `New component added to ${selectedFacility.name}: ${componentForm.name} (${componentForm.status})`,
+          entity_type: 'component',
+          entity_id: newComponent?.id,
+        });
+        
         // Update the selectedFacility with the new component
         setSelectedFacility(prev => prev ? {
           ...prev,
@@ -83,9 +109,17 @@ export const FacilitiesView = () => {
 
   const handleUpdateComponent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingComponent) return;
+    if (!editingComponent || !selectedFacility) return;
     updateComponent.mutate({ id: editingComponent.id, ...componentForm }, {
       onSuccess: (updatedComponent) => {
+        // Log activity
+        createActivityLog.mutate({
+          event_type: 'component_updated',
+          event_description: `Component updated in ${selectedFacility.name}: ${componentForm.name} status changed to ${componentForm.status}`,
+          entity_type: 'component',
+          entity_id: editingComponent.id,
+        });
+        
         // Update the selectedFacility with the updated component
         setSelectedFacility(prev => prev ? {
           ...prev,
@@ -102,12 +136,32 @@ export const FacilitiesView = () => {
   const handleDeleteConfirm = () => {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'facility') {
+      const facility = facilities?.find(f => f.id === deleteConfirm.id);
       deleteFacility.mutate(deleteConfirm.id, {
-        onSuccess: () => setSelectedFacility(null),
+        onSuccess: () => {
+          if (facility) {
+            createActivityLog.mutate({
+              event_type: 'facility_deleted',
+              event_description: `Facility deleted: ${facility.name}`,
+              entity_type: 'facility',
+              entity_id: deleteConfirm.id,
+            });
+          }
+          setSelectedFacility(null);
+        },
       });
     } else {
+      const component = selectedFacility?.components.find(c => c.id === deleteConfirm.id);
       deleteComponent.mutate(deleteConfirm.id, {
         onSuccess: () => {
+          if (component && selectedFacility) {
+            createActivityLog.mutate({
+              event_type: 'component_deleted',
+              event_description: `Component deleted from ${selectedFacility.name}: ${component.name}`,
+              entity_type: 'component',
+              entity_id: deleteConfirm.id,
+            });
+          }
           // Update the selectedFacility by removing the deleted component
           setSelectedFacility(prev => prev ? {
             ...prev,
