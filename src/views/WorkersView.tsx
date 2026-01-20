@@ -10,6 +10,7 @@ import { useWorkers, useCreateWorker, useDeleteWorker, useToggleWorkerPresence }
 import { Users, UserCheck, UserX, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useCreateActivityLog } from "@/hooks/useActivityLogs";
 
 type WorkerRole = Database['public']['Enums']['worker_role'];
 
@@ -29,6 +30,7 @@ export const WorkersView = () => {
   const createWorker = useCreateWorker();
   const deleteWorker = useDeleteWorker();
   const togglePresence = useToggleWorkerPresence();
+  const createActivityLog = useCreateActivityLog();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWorkerName, setNewWorkerName] = useState("");
@@ -45,12 +47,21 @@ export const WorkersView = () => {
     }
 
     try {
-      await createWorker.mutateAsync({
+      const newWorker = await createWorker.mutateAsync({
         name: newWorkerName.trim(),
         role: newWorkerRole,
         is_present: false,
         custom_role: newWorkerRole === 'other' ? customRole.trim() : null,
       });
+      
+      // Log activity
+      createActivityLog.mutate({
+        event_type: 'worker_added',
+        event_description: `New worker added: ${newWorkerName.trim()} (${newWorkerRole === 'other' ? customRole : newWorkerRole})`,
+        entity_type: 'worker',
+        entity_id: newWorker?.id,
+      });
+      
       toast.success("Worker added successfully");
       setNewWorkerName("");
       setNewWorkerRole("carpenter");
@@ -63,7 +74,19 @@ export const WorkersView = () => {
 
   const handleDeleteWorker = async (id: string) => {
     try {
+      const worker = workers.find(w => w.id === id);
       await deleteWorker.mutateAsync(id);
+      
+      // Log activity
+      if (worker) {
+        createActivityLog.mutate({
+          event_type: 'worker_removed',
+          event_description: `Worker removed: ${worker.name}`,
+          entity_type: 'worker',
+          entity_id: id,
+        });
+      }
+      
       toast.success("Worker removed");
     } catch (error) {
       toast.error("Failed to remove worker");
@@ -72,7 +95,19 @@ export const WorkersView = () => {
 
   const handleTogglePresence = async (id: string, isPresent: boolean) => {
     try {
+      const worker = workers.find(w => w.id === id);
       await togglePresence.mutateAsync({ id, isPresent });
+      
+      // Log activity
+      if (worker) {
+        createActivityLog.mutate({
+          event_type: isPresent ? 'worker_present' : 'worker_away',
+          event_description: `${worker.name} marked as ${isPresent ? 'present' : 'away'}`,
+          entity_type: 'worker',
+          entity_id: id,
+        });
+      }
+      
       toast.success(isPresent ? "Worker marked as present" : "Worker marked as away");
     } catch (error) {
       toast.error("Failed to update presence");
