@@ -38,9 +38,13 @@ const Index = () => {
     setActiveTab('calendar');
   };
 
+  const handleReportsClick = () => {
+    setActiveTab('reports');
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Header onCalendarClick={handleCalendarClick} />
+      <Header onCalendarClick={handleCalendarClick} onReportsClick={handleReportsClick} />
       <div className="flex">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
         <main className="flex-1 p-4 md:p-6 pb-20 lg:pb-6">
