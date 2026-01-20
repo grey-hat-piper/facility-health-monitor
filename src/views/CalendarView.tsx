@@ -10,10 +10,28 @@ import {
   Users, 
   Wrench,
   CalendarDays,
-  Activity
+  Activity,
+  Filter
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const entityTypes = [
+  { value: 'all', label: 'All Types' },
+  { value: 'fault', label: 'Faults' },
+  { value: 'report', label: 'Reports' },
+  { value: 'facility', label: 'Facilities' },
+  { value: 'worker', label: 'Workers' },
+  { value: 'component', label: 'Components' },
+];
 
 const getEventIcon = (entityType: string) => {
   switch (entityType) {
@@ -42,7 +60,12 @@ const getEventBadgeVariant = (eventType: string) => {
 
 export const CalendarView = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [filterType, setFilterType] = useState<string>('all');
   const { data: activities, isLoading } = useActivityLogs(selectedDate);
+
+  const filteredActivities = activities?.filter(activity => 
+    filterType === 'all' || activity.entity_type === filterType
+  );
 
   return (
     <div className="space-y-6">
@@ -60,30 +83,49 @@ export const CalendarView = () => {
             <CardTitle className="text-lg">Select Date</CardTitle>
           </CardHeader>
           <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-md border"
-            />
+            <ScrollArea className="h-[320px]">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className={cn("rounded-md border pointer-events-auto")}
+              />
+            </ScrollArea>
           </CardContent>
         </Card>
 
         <Card className="animate-slide-up">
           <CardHeader>
-            <CardTitle className="text-lg">
-              Activities on {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a date'}
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle className="text-lg">
+                Activities on {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a date'}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {entityTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
-            ) : activities && activities.length > 0 ? (
+            ) : filteredActivities && filteredActivities.length > 0 ? (
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-3">
-                  {activities.map((activity) => (
+                  {filteredActivities.map((activity) => (
                     <div
                       key={activity.id}
                       className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
