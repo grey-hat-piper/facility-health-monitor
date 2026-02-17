@@ -29,8 +29,9 @@ export const Header = ({ onCalendarClick, onReportsClick, onAIReportClick }: Hea
   const navigate = useNavigate();
   const { data: activityLogs } = useActivityLogs();
 
-  // Get recent notifications (last 10 activity logs)
-  const notifications = activityLogs?.slice(0, 10) || [];
+  // Get notifications from the last 24 hours only
+  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const notifications = activityLogs?.filter(log => new Date(log.created_at) > last24h).slice(0, 10) || [];
   const unreadCount = Math.min(notifications.length, 9);
 
   const handleLogout = () => {
