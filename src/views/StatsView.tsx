@@ -1,43 +1,41 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsChart } from "@/components/dashboard/StatsChart";
-import { mockDailyStats } from "@/data/mockData";
+import { useStats } from "@/hooks/useStats";
 import { AlertTriangle, TrendingUp, ClipboardCheck, Activity } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type TimeRange = 'daily' | 'weekly' | 'monthly' | 'annually';
 
 export const StatsView = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('monthly');
 
-  // Filter data based on time range
+  const daysMap: Record<TimeRange, number> = {
+    daily: 1,
+    weekly: 7,
+    monthly: 30,
+    annually: 365,
+  };
+
+  const { data: allStats, isLoading } = useStats(daysMap[timeRange]);
+
   const filteredStats = useMemo(() => {
-    const today = new Date();
-    const daysMap: Record<TimeRange, number> = {
-      daily: 1,
-      weekly: 7,
-      monthly: 30,
-      annually: 365,
-    };
-    
-    const days = daysMap[timeRange];
-    
-    // For demo purposes, we only have 30 days of mock data
-    // In production, you'd fetch data based on the time range
-    if (days <= 30) {
-      return mockDailyStats.slice(-days);
-    }
-    
-    // For annual, repeat the data to simulate more days
-    return mockDailyStats;
-  }, [timeRange]);
+    return allStats.map(s => ({
+      date: s.date,
+      totalFaults: s.totalFaults,
+      resolvedFaults: s.resolvedFaults,
+      inspections: s.inspections,
+      averageHealth: s.averageHealth,
+    }));
+  }, [allStats]);
 
   const totalFaults = filteredStats.reduce((acc, s) => acc + s.totalFaults, 0);
   const totalResolved = filteredStats.reduce((acc, s) => acc + s.resolvedFaults, 0);
   const totalInspections = filteredStats.reduce((acc, s) => acc + s.inspections, 0);
-  const avgHealth = Math.round(
-    filteredStats.reduce((acc, s) => acc + s.averageHealth, 0) / filteredStats.length
-  );
+  const avgHealth = filteredStats.length > 0
+    ? Math.round(filteredStats.reduce((acc, s) => acc + s.averageHealth, 0) / filteredStats.length)
+    : 0;
 
   const getTitleSuffix = () => {
     switch (timeRange) {
@@ -47,6 +45,18 @@ export const StatsView = () => {
       case 'annually': return 'This Year';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -104,7 +114,7 @@ export const StatsView = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalInspections}</p>
-                <p className="text-xs text-muted-foreground">Inspections</p>
+                <p className="text-xs text-muted-foreground">Reports</p>
               </div>
             </div>
           </CardContent>
@@ -166,7 +176,7 @@ export const StatsView = () => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <ClipboardCheck className="h-5 w-5 text-primary" />
-            Inspections Performed
+            Reports Filed
           </CardTitle>
         </CardHeader>
         <CardContent>
