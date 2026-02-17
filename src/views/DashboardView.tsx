@@ -5,7 +5,7 @@ import { HealthIndicator } from "@/components/dashboard/HealthIndicator";
 import { useFacilities, FacilityWithComponents } from "@/hooks/useFacilities";
 import { useFaults, DbFault } from "@/hooks/useFaults";
 import { useWorkers } from "@/hooks/useWorkers";
-import { mockReports } from "@/data/mockData";
+import { useReports } from "@/hooks/useReports";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Zap, Droplets, Shield, Bath, Hammer, Clock, HelpCircle, Cuboid } from "lucide-react";
@@ -50,8 +50,9 @@ export const DashboardView = () => {
   const { data: facilities, isLoading: facilitiesLoading } = useFacilities();
   const { data: faults, isLoading: faultsLoading } = useFaults();
   const { data: workers = [], isLoading: workersLoading } = useWorkers();
+  const { data: reports, isLoading: reportsLoading } = useReports();
 
-  const isLoading = facilitiesLoading || faultsLoading || workersLoading;
+  const isLoading = facilitiesLoading || faultsLoading || workersLoading || reportsLoading;
 
   if (isLoading) {
     return (
@@ -275,14 +276,21 @@ export const DashboardView = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {mockReports.slice(0, 3).map(report => (
-              <div key={report.id} className="p-3 rounded-lg border bg-card">
-                <p className="text-sm">{report.note}</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {format(report.timestamp, 'MMM d, h:mm a')}
-                </p>
-              </div>
-            ))}
+            {!reports || reports.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">No reports yet</p>
+            ) : (
+              reports.slice(0, 3).map(report => (
+                <div key={report.id} className="p-3 rounded-lg border bg-card">
+                  <p className="text-sm">{report.note}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {format(new Date(report.created_at), 'MMM d, h:mm a')}
+                  </p>
+                  {report.reported_by && (
+                    <p className="text-xs text-muted-foreground mt-1">By: {report.reported_by}</p>
+                  )}
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

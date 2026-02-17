@@ -1,9 +1,16 @@
-import { DailyStats } from "@/types/facilities";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { format } from "date-fns";
 
+interface StatsChartData {
+  date: Date;
+  totalFaults: number;
+  resolvedFaults: number;
+  inspections: number;
+  averageHealth: number;
+}
+
 interface StatsChartProps {
-  data: DailyStats[];
+  data: StatsChartData[];
   type: 'faults' | 'health' | 'inspections';
 }
 
