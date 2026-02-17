@@ -122,7 +122,7 @@ export const Header = ({ onCalendarClick, onReportsClick, onAIReportClick }: Hea
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
+            <PopoverContent className="w-80 p-0 max-h-[70vh] overflow-y-auto" align="end">
               <div className="p-3 border-b">
                 <h4 className="font-semibold text-sm">Notifications</h4>
                 <p className="text-xs text-muted-foreground">Recent activity in your facility</p>
