@@ -16,8 +16,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const CORRECT_PASSWORD = 'facilityadmin';
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,8 +30,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (username: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    if (password !== CORRECT_PASSWORD) {
-      return { success: false, error: 'Invalid password' };
+    // Verify password server-side via edge function
+    try {
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-password', {
+        body: { password },
+      });
+
+      if (verifyError) {
+        return { success: false, error: 'Unable to verify password. Please try again.' };
+      }
+
+      if (!verifyData?.valid) {
+        return { success: false, error: 'Invalid password' };
+      }
+    } catch {
+      return { success: false, error: 'Unable to verify password. Please try again.' };
     }
 
     if (!username.trim()) {
