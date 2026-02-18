@@ -44,10 +44,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, error: 'Email is required' };
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      return { success: false, error: 'Please enter a valid email address' };
+    // School email validation
+    if (!email.trim().endsWith('@lgc.edu.gh')) {
+      return { success: false, error: 'Only school emails (@lgc.edu.gh) are allowed' };
     }
 
     try {
