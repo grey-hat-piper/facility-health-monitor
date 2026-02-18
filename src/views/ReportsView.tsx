@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useCreateActivityLog } from "@/hooks/useActivityLogs";
 import { GoogleSheetSync } from "@/components/dashboard/GoogleSheetSync";
+import { syncToGoogleSheet } from "@/lib/googleSheetSync";
 
 export const ReportsView = () => {
   const { user } = useAuth();
@@ -123,6 +124,11 @@ export const ReportsView = () => {
           
           setIsDialogOpen(false);
           resetForm();
+
+          // Auto-sync to Google Sheet
+          syncToGoogleSheet().catch(err => 
+            console.error('Google Sheet sync failed:', err)
+          );
         }
       });
     } catch (error) {
