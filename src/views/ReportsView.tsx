@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useCreateActivityLog } from "@/hooks/useActivityLogs";
+import { GoogleSheetSync } from "@/components/dashboard/GoogleSheetSync";
 
 export const ReportsView = () => {
   const { user } = useAuth();
@@ -341,6 +342,9 @@ export const ReportsView = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Google Sheets Sync */}
+      <GoogleSheetSync />
 
       {/* Edit Report Dialog */}
       <Dialog open={!!editingReport} onOpenChange={(open) => {
