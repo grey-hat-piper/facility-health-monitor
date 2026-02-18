@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sheet, Loader2, ExternalLink } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Sheet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getGoogleSheetWebhookUrl, setGoogleSheetWebhookUrl, syncToGoogleSheet } from "@/lib/googleSheetSync";
 
 const APPS_SCRIPT_TEMPLATE = `// Paste this entire script into Google Apps Script (Extensions > Apps Script)
 // Then deploy as Web App (Deploy > New Deployment > Web App, set access to "Anyone")
@@ -64,6 +64,15 @@ export const GoogleSheetSync = () => {
   const [showScript, setShowScript] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    setWebhookUrl(getGoogleSheetWebhookUrl());
+  }, []);
+
+  const handleUrlChange = (url: string) => {
+    setWebhookUrl(url);
+    setGoogleSheetWebhookUrl(url);
+  };
+
   const handleSync = async () => {
     if (!webhookUrl.trim()) {
       toast({ title: "Missing URL", description: "Enter your Google Apps Script web app URL.", variant: "destructive" });
@@ -72,15 +81,12 @@ export const GoogleSheetSync = () => {
 
     setIsSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-google-sheet', {
-        body: { webhookUrl: webhookUrl.trim() },
-      });
-
-      if (error) throw error;
+      const result = await syncToGoogleSheet();
+      if (!result.success) throw new Error(result.error);
 
       toast({
         title: "Synced to Google Sheets",
-        description: `${data.summary.total} faults for week ${data.summary.week}`,
+        description: `${result.summary.total} faults for week ${result.summary.week}`,
       });
     } catch (err: any) {
       toast({
@@ -107,10 +113,10 @@ export const GoogleSheetSync = () => {
           <Input
             placeholder="https://script.google.com/macros/s/.../exec"
             value={webhookUrl}
-            onChange={(e) => setWebhookUrl(e.target.value)}
+            onChange={(e) => handleUrlChange(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Sends this week's faults to your Google Sheet.
+            The sheet auto-syncs when you submit a report. You can also sync manually.
           </p>
         </div>
 
