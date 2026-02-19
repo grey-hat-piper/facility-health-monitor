@@ -12,6 +12,7 @@ import { MapPin, Zap, Droplets, Shield, Bath, Hammer, Clock, HelpCircle, Cuboid 
 import { format } from "date-fns";
 import { FaultType } from "@/types/facilities";
 import { useAuth } from "@/contexts/AuthContext";
+import bannerBg from "@/assets/banner.jpg";
 
 const statusIcons = {
   good: <CheckCircle2 className="h-4 w-4" />,
@@ -180,8 +181,13 @@ export const DashboardView = () => {
       </div>
 
       {/* Overall Health */}
-      <Card className="gradient-primary text-primary-foreground overflow-hidden">
-        <CardContent className="p-6">
+      <Card className="text-primary-foreground overflow-hidden relative">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${bannerBg})` }}
+        />
+        <div className="absolute inset-0 bg-primary/80" />
+        <CardContent className="p-6 relative z-10">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-primary-foreground/80 text-sm">Overall Facility Health</p>
