@@ -186,7 +186,7 @@ export const DashboardView = () => {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${bannerBg})` }}
         />
-        <div className="absolute inset-0 bg-primary/80" />
+        <div className="absolute inset-0 bg-primary/75" />
         <CardContent className="p-6 relative z-10">
           <div className="flex items-center justify-between">
             <div>
