@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, LogIn, UserCircle } from 'lucide-react';
+import { LogIn, UserCircle } from 'lucide-react';
+import schoolLogo from '@/assets/default_icon.jpg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,9 +76,7 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-xl gradient-primary">
-              <Building2 className="h-8 w-8 text-primary-foreground" />
-            </div>
+            <img src={schoolLogo} alt="School Logo" className="h-16 w-16 rounded-xl object-contain" />
           </div>
           <CardTitle className="text-2xl">LGC-FacilityHub</CardTitle>
           <CardDescription>School Facilities Management System</CardDescription>
