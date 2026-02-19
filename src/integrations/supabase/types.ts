@@ -50,6 +50,7 @@ export type Database = {
           email: string | null
           id: string
           last_login: string
+          position: string | null
           username: string
         }
         Insert: {
@@ -57,6 +58,7 @@ export type Database = {
           email?: string | null
           id?: string
           last_login?: string
+          position?: string | null
           username: string
         }
         Update: {
@@ -64,6 +66,7 @@ export type Database = {
           email?: string | null
           id?: string
           last_login?: string
+          position?: string | null
           username?: string
         }
         Relationships: []

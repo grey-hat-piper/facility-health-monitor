@@ -14,11 +14,13 @@ interface RecentUser {
   id: string;
   username: string;
   email: string | null;
+  position: string | null;
 }
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [position, setPosition] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
@@ -30,7 +32,7 @@ const Login = () => {
     const fetchRecentUsers = async () => {
       const { data } = await supabase
         .from('app_users')
-        .select('id, username, email')
+        .select('id, username, email, position')
         .order('username', { ascending: true });
       if (data) setRecentUsers(data);
     };
@@ -41,6 +43,7 @@ const Login = () => {
     setSelectedUserId(user.id);
     setUsername(user.username);
     setEmail(user.email || '');
+    setPosition(user.position || '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +55,7 @@ const Login = () => {
     }
 
     setIsLoading(true);
-    const result = await login(username, email, password);
+    const result = await login(username, email, position, password);
     
     if (result.success) {
       toast.success('Welcome to FacilityHub!');
@@ -103,6 +106,11 @@ const Login = () => {
                     <span className="text-xs font-medium truncate w-full text-center">
                       {user.username}
                     </span>
+                    {user.position && (
+                      <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                        {user.position}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -119,6 +127,16 @@ const Login = () => {
                 value={username}
                 onChange={(e) => { setUsername(e.target.value); setSelectedUserId(null); }}
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="position">Position</Label>
+              <Input
+                id="position"
+                type="text"
+                placeholder="e.g. Facility Manager, Inspector"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
               />
             </div>
             <div className="space-y-2">
