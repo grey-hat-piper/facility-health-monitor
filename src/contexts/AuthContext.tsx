@@ -9,7 +9,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, email: string, position: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (username: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (username: string, email: string, position: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Verify password server-side via edge function
     try {
       const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-password', {
@@ -78,7 +78,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from('app_users')
           .update({ 
             last_login: new Date().toISOString(),
-            email: email.trim()
+            email: email.trim(),
+            position: position.trim() || null
           })
           .eq('id', existingUser.id);
         
@@ -89,7 +90,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from('app_users')
           .insert({ 
             username: username.trim(),
-            email: email.trim()
+            email: email.trim(),
+            position: position.trim() || null
           })
           .select()
           .single();

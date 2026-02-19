@@ -1,0 +1,1 @@
+ALTER TABLE public.app_users ADD COLUMN position text NULL;
