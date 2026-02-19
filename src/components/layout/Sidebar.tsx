@@ -7,9 +7,13 @@ import {
   AlertTriangle, 
   FileText, 
   BarChart3,
-  Mail,
+  FileSpreadsheet,
   CalendarDays
 } from "lucide-react";
+import { useFaults } from "@/hooks/useFaults";
+import { useFacilities } from "@/hooks/useFacilities";
+import { exportFaultSummaryExcel } from "@/lib/exportFaultSummary";
+import { useToast } from "@/hooks/use-toast";
 
 interface SidebarProps {
   activeTab: string;
@@ -27,6 +31,19 @@ const navItems = [
 ];
 
 export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
+  const { data: faults } = useFaults();
+  const { data: facilities } = useFacilities();
+  const { toast } = useToast();
+
+  const handleExport = () => {
+    if (!faults || !facilities) {
+      toast({ title: "Data not ready", description: "Please wait for data to load.", variant: "destructive" });
+      return;
+    }
+    exportFaultSummaryExcel(faults, facilities);
+    toast({ title: "Report downloaded", description: "Fault summary Excel file has been downloaded." });
+  };
+
   return (
     <aside className="hidden lg:flex flex-col w-64 border-r bg-card min-h-[calc(100vh-4rem)]">
       <nav className="flex-1 p-4 space-y-1">
@@ -47,9 +64,9 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       </nav>
       
       <div className="p-4 border-t">
-        <Button variant="outline" className="w-full gap-2">
-          <Mail className="h-4 w-4" />
-          Send AI Report
+        <Button variant="outline" className="w-full gap-2" onClick={handleExport}>
+          <FileSpreadsheet className="h-4 w-4" />
+          Download Fault Report
         </Button>
       </div>
     </aside>
