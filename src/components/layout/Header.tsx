@@ -1,4 +1,5 @@
-import { Bell, Building2, LogOut, CalendarDays, FileText, Sparkles } from "lucide-react";
+import { Bell, LogOut, CalendarDays, FileText, Sparkles } from "lucide-react";
+import schoolLogo from '@/assets/default_icon.jpg';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,9 +61,7 @@ export const Header = ({ onCalendarClick, onReportsClick, onAIReportClick }: Hea
     <header className="sticky top-0 z-50 w-full border-b bg-card/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg gradient-primary">
-            <Building2 className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src={schoolLogo} alt="School Logo" className="h-10 w-10 rounded-lg object-contain" />
           <div>
             <h1 className="text-lg font-bold">FacilityHub</h1>
             <p className="text-xs text-muted-foreground hidden sm:block">School Facilities Management</p>
