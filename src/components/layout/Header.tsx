@@ -63,7 +63,7 @@ export const Header = ({ onCalendarClick, onReportsClick, onAIReportClick }: Hea
         <div className="flex items-center gap-3">
           <img src={schoolLogo} alt="School Logo" className="h-10 w-10 rounded-lg object-contain" />
           <div>
-            <h1 className="text-lg font-bold">FacilityHub</h1>
+            <h1 className="text-lg font-bold">LGC-FacilityHub</h1>
             <p className="text-xs text-muted-foreground hidden sm:block">School Facilities Management</p>
           </div>
         </div>
