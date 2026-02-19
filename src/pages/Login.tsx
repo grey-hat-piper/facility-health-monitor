@@ -31,8 +31,7 @@ const Login = () => {
       const { data } = await supabase
         .from('app_users')
         .select('id, username, email')
-        .order('last_login', { ascending: false })
-        .limit(6);
+        .order('username', { ascending: true });
       if (data) setRecentUsers(data);
     };
     fetchRecentUsers();
@@ -83,7 +82,7 @@ const Login = () => {
         <CardContent className="space-y-6">
           {recentUsers.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Recent Users</Label>
+              <Label className="text-sm text-muted-foreground">Select User</Label>
               <div className="grid grid-cols-3 gap-2">
                 {recentUsers.map((user) => (
                   <button
