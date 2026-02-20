@@ -84,10 +84,10 @@ export const useToggleWorkerPresence = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, isPresent }: { id: string; isPresent: boolean }) => {
+    mutationFn: async ({ id, isPresent, absenceReason }: { id: string; isPresent: boolean; absenceReason?: string | null }) => {
       const { data, error } = await supabase
         .from('workers')
-        .update({ is_present: isPresent })
+        .update({ is_present: isPresent, absence_reason: isPresent ? null : absenceReason } as any)
         .eq('id', id)
         .select()
         .single();
