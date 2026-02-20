@@ -1,4 +1,4 @@
-import { Bell, LogOut, CalendarDays, FileText, Sparkles } from "lucide-react";
+import { Bell, LogOut, CalendarDays, FileText } from "lucide-react";
 import schoolLogo from '@/assets/default_icon.jpg';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +22,9 @@ import {
 interface HeaderProps {
   onCalendarClick?: () => void;
   onReportsClick?: () => void;
-  onAIReportClick?: () => void;
 }
 
-export const Header = ({ onCalendarClick, onReportsClick, onAIReportClick }: HeaderProps) => {
+export const Header = ({ onCalendarClick, onReportsClick }: HeaderProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { data: activityLogs } = useActivityLogs();
@@ -74,25 +73,6 @@ export const Header = ({ onCalendarClick, onReportsClick, onAIReportClick }: Hea
               {user.username}
             </span>
           )}
-          
-          {/* AI Report icon */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={onAIReportClick} 
-                  className="text-primary hover:text-primary/80"
-                >
-                  <Sparkles className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Send AI Report</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           
           {/* Reports icon - mobile only */}
           <Button 

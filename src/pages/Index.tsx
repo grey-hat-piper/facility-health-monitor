@@ -9,11 +9,9 @@ import { FaultsView } from "@/views/FaultsView";
 import { ReportsView } from "@/views/ReportsView";
 import { StatsView } from "@/views/StatsView";
 import { CalendarView } from "@/views/CalendarView";
-import { AIReportDialog } from "@/components/dashboard/AIReportDialog";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isAIReportOpen, setIsAIReportOpen] = useState(false);
 
   const renderView = () => {
     switch (activeTab) {
@@ -44,16 +42,11 @@ const Index = () => {
     setActiveTab('reports');
   };
 
-  const handleAIReportClick = () => {
-    setIsAIReportOpen(true);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Header 
         onCalendarClick={handleCalendarClick} 
         onReportsClick={handleReportsClick} 
-        onAIReportClick={handleAIReportClick}
       />
       <div className="flex">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
@@ -62,7 +55,6 @@ const Index = () => {
         </main>
       </div>
       <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
-      <AIReportDialog open={isAIReportOpen} onOpenChange={setIsAIReportOpen} />
     </div>
   );
 };
