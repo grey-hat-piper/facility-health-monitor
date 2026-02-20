@@ -236,6 +236,7 @@ export type Database = {
       }
       workers: {
         Row: {
+          absence_reason: Database["public"]["Enums"]["absence_reason"] | null
           avatar_url: string | null
           created_at: string
           custom_role: string | null
@@ -247,6 +248,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          absence_reason?: Database["public"]["Enums"]["absence_reason"] | null
           avatar_url?: string | null
           created_at?: string
           custom_role?: string | null
@@ -258,6 +260,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          absence_reason?: Database["public"]["Enums"]["absence_reason"] | null
           avatar_url?: string | null
           created_at?: string
           custom_role?: string | null
@@ -278,6 +281,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      absence_reason:
+        | "public_holiday"
+        | "casual_leave"
+        | "absent"
+        | "permission"
+        | "annual_leave"
+        | "late"
+        | "hospital"
+        | "official_duty"
+        | "maternity_leave"
+        | "resigned"
       component_status: "good" | "repairs" | "faulty"
       fault_status: "open" | "in-progress" | "resolved"
       fault_type:
@@ -424,6 +438,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      absence_reason: [
+        "public_holiday",
+        "casual_leave",
+        "absent",
+        "permission",
+        "annual_leave",
+        "late",
+        "hospital",
+        "official_duty",
+        "maternity_leave",
+        "resigned",
+      ],
       component_status: ["good", "repairs", "faulty"],
       fault_status: ["open", "in-progress", "resolved"],
       fault_type: [

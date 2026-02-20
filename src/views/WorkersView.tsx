@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { WorkerCard } from "@/components/dashboard/WorkerCard";
-import { useWorkers, useCreateWorker, useDeleteWorker, useToggleWorkerPresence } from "@/hooks/useWorkers";
+import { useWorkers, useCreateWorker, useDeleteWorker, useToggleWorkerPresence, useUpdateWorker } from "@/hooks/useWorkers";
 import { Users, UserCheck, UserX, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
@@ -29,6 +29,7 @@ export const WorkersView = () => {
   const { data: workers = [], isLoading } = useWorkers();
   const createWorker = useCreateWorker();
   const deleteWorker = useDeleteWorker();
+  const updateWorker = useUpdateWorker();
   const togglePresence = useToggleWorkerPresence();
   const createActivityLog = useCreateActivityLog();
   
@@ -96,16 +97,15 @@ export const WorkersView = () => {
     }
   };
 
-  const handleTogglePresence = async (id: string, isPresent: boolean) => {
+  const handleTogglePresence = async (id: string, isPresent: boolean, absenceReason?: string | null) => {
     try {
       const worker = workers.find(w => w.id === id);
-      await togglePresence.mutateAsync({ id, isPresent });
+      await togglePresence.mutateAsync({ id, isPresent, absenceReason });
       
-      // Log activity
       if (worker) {
         createActivityLog.mutate({
           event_type: isPresent ? 'worker_present' : 'worker_away',
-          event_description: `${worker.name} marked as ${isPresent ? 'present' : 'away'}`,
+          event_description: `${worker.name} marked as ${isPresent ? 'present' : 'away'}${!isPresent && absenceReason ? ` (${absenceReason})` : ''}`,
           entity_type: 'worker',
           entity_id: id,
         });
@@ -114,6 +114,15 @@ export const WorkersView = () => {
       toast.success(isPresent ? "Worker marked as present" : "Worker marked as away");
     } catch (error) {
       toast.error("Failed to update presence");
+    }
+  };
+
+  const handleUpdateWorker = async (id: string, updates: { name: string; phone_number: string | null; role: string; custom_role: string | null }) => {
+    try {
+      await updateWorker.mutateAsync({ id, ...updates } as any);
+      toast.success("Worker updated");
+    } catch (error) {
+      toast.error("Failed to update worker");
     }
   };
 
@@ -257,6 +266,7 @@ export const WorkersView = () => {
                   worker={worker} 
                   onTogglePresence={handleTogglePresence}
                   onDelete={handleDeleteWorker}
+                  onUpdate={handleUpdateWorker}
                 />
               </div>
             ))
@@ -281,6 +291,7 @@ export const WorkersView = () => {
                   worker={worker} 
                   onTogglePresence={handleTogglePresence}
                   onDelete={handleDeleteWorker}
+                  onUpdate={handleUpdateWorker}
                 />
               </div>
             ))}
