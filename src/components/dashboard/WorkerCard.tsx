@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Trash2, Phone } from "lucide-react";
 import type { Worker } from "@/hooks/useWorkers";
 
 interface WorkerCardProps {
@@ -53,6 +53,12 @@ export const WorkerCard = ({ worker, onTogglePresence, onDelete }: WorkerCardPro
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{worker.name}</p>
+        {worker.phone_number && (
+          <a href={`tel:${worker.phone_number}`} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors mt-0.5">
+            <Phone className="h-3 w-3" />
+            {worker.phone_number}
+          </a>
+        )}
         <Badge 
           variant="outline" 
           className={cn("text-xs mt-1", roleColors[worker.role])}

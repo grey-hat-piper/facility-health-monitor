@@ -242,6 +242,7 @@ export type Database = {
           id: string
           is_present: boolean
           name: string
+          phone_number: string | null
           role: Database["public"]["Enums"]["worker_role"]
           updated_at: string
         }
@@ -252,6 +253,7 @@ export type Database = {
           id?: string
           is_present?: boolean
           name: string
+          phone_number?: string | null
           role: Database["public"]["Enums"]["worker_role"]
           updated_at?: string
         }
@@ -262,6 +264,7 @@ export type Database = {
           id?: string
           is_present?: boolean
           name?: string
+          phone_number?: string | null
           role?: Database["public"]["Enums"]["worker_role"]
           updated_at?: string
         }

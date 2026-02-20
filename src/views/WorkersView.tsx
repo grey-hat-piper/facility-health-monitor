@@ -34,6 +34,7 @@ export const WorkersView = () => {
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWorkerName, setNewWorkerName] = useState("");
+  const [newWorkerPhone, setNewWorkerPhone] = useState("");
   const [newWorkerRole, setNewWorkerRole] = useState<WorkerRole>("carpenter");
   const [customRole, setCustomRole] = useState("");
 
@@ -52,7 +53,8 @@ export const WorkersView = () => {
         role: newWorkerRole,
         is_present: false,
         custom_role: newWorkerRole === 'other' ? customRole.trim() : null,
-      });
+        phone_number: newWorkerPhone.trim() || null,
+      } as any);
       
       // Log activity
       createActivityLog.mutate({
@@ -64,6 +66,7 @@ export const WorkersView = () => {
       
       toast.success("Worker added successfully");
       setNewWorkerName("");
+      setNewWorkerPhone("");
       setNewWorkerRole("carpenter");
       setCustomRole("");
       setIsDialogOpen(false);
@@ -147,6 +150,15 @@ export const WorkersView = () => {
                   placeholder="Enter worker name"
                   value={newWorkerName}
                   onChange={(e) => setNewWorkerName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Phone Number</label>
+                <Input
+                  placeholder="Enter phone number"
+                  value={newWorkerPhone}
+                  onChange={(e) => setNewWorkerPhone(e.target.value)}
+                  type="tel"
                 />
               </div>
               <div className="space-y-2">
