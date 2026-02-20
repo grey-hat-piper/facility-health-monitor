@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HealthIndicator } from "@/components/dashboard/HealthIndicator";
 import { useFacilities, useCreateFacility, useUpdateFacility, useDeleteFacility, useCreateComponent, useUpdateComponent, useDeleteComponent, FacilityWithComponents, DbFacilityComponent } from "@/hooks/useFacilities";
-import { MapPin, ChevronRight, CheckCircle2, Wrench, AlertTriangle, Calendar, Plus, Edit, Trash2, X } from "lucide-react";
+import { MapPin, ChevronRight, CheckCircle2, Wrench, AlertTriangle, Calendar, Plus, Edit, Trash2, X, Search } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ export const FacilitiesView = () => {
 
   const [formData, setFormData] = useState({ name: '', location: '' });
   const [componentForm, setComponentForm] = useState({ name: '', status: 'good' as 'good' | 'repairs' | 'faulty' });
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleCreateFacility = (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,6 +249,17 @@ export const FacilitiesView = () => {
         </Dialog>
       </div>
 
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search facilities, components, or locations..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {!facilities || facilities.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
@@ -258,9 +270,22 @@ export const FacilitiesView = () => {
             </Button>
           </CardContent>
         </Card>
-      ) : (
+      ) : (() => {
+        const q = searchQuery.toLowerCase();
+        const filtered = facilities.filter(f =>
+          f.name.toLowerCase().includes(q) ||
+          f.location.toLowerCase().includes(q) ||
+          f.components.some(c => c.name.toLowerCase().includes(q))
+        );
+        return filtered.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <p className="text-muted-foreground">No facilities match your search.</p>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid gap-4">
-          {facilities.map((facility, index) => (
+          {filtered.map((facility, index) => (
             <Card 
               key={facility.id} 
               className="cursor-pointer hover:shadow-card-hover transition-all animate-slide-up"
@@ -318,7 +343,8 @@ export const FacilitiesView = () => {
             </Card>
           ))}
         </div>
-      )}
+        );
+      })()}
 
       {/* Facility Details Dialog */}
       <Dialog open={!!selectedFacility && !isEditDialogOpen} onOpenChange={() => setSelectedFacility(null)}>
