@@ -155,14 +155,27 @@ export const WorkerCard = ({ worker, onTogglePresence, onDelete, onUpdate }: Wor
               </SelectContent>
             </Select>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-7 px-2 text-muted-foreground"
-              onClick={handleMarkPresent}
-            >
-              Mark Present
-            </Button>
+            <Select onValueChange={(v) => {
+              if (v === '__present__') {
+                handleMarkPresent();
+              } else {
+                handleMarkAway(v);
+              }
+            }}>
+              <SelectTrigger className="h-7 w-auto text-xs px-2 border-none bg-transparent text-muted-foreground hover:bg-muted">
+                <span>{currentAbsenceReason ? absenceReasonLabels[currentAbsenceReason] || 'Away' : 'Away'}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__present__" className="text-xs font-medium text-status-healthy">
+                  ✓ Mark Present
+                </SelectItem>
+                {Object.entries(absenceReasonLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value} className="text-xs">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
           {onUpdate && (
             <Button
