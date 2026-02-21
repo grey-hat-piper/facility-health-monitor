@@ -1,0 +1,1 @@
+ALTER TABLE public.faults ADD COLUMN checklist jsonb DEFAULT '[]'::jsonb;

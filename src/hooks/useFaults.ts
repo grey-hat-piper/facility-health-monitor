@@ -3,6 +3,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { FaultType } from '@/types/facilities';
 
+export interface ChecklistItem {
+  label: string;
+  done: boolean;
+}
+
+export const PROCUREMENT_CHECKLIST: ChecklistItem[] = [
+  { label: 'Memo', done: false },
+  { label: 'Head of School', done: false },
+  { label: 'Accounts', done: false },
+  { label: 'Procurement', done: false },
+  { label: 'Director', done: false },
+  { label: 'Payment', done: false },
+  { label: 'Work Started', done: false },
+];
+
 export interface DbFault {
   id: string;
   facility_id: string;
@@ -14,6 +29,7 @@ export interface DbFault {
   status: 'open' | 'in-progress' | 'resolved';
   images: string[] | null;
   custom_fault_type: string | null;
+  checklist: ChecklistItem[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,7 +44,7 @@ export const useFaults = () => {
         .order('reported_at', { ascending: false });
 
       if (error) throw error;
-      return data as DbFault[];
+      return (data as unknown as DbFault[]);
     },
   });
 };
@@ -74,10 +90,12 @@ export const useUpdateFault = () => {
       status?: 'open' | 'in-progress' | 'resolved';
       description?: string;
       assigned_worker_id?: string | null;
+      checklist?: ChecklistItem[];
     }) => {
+      const updateData: Record<string, unknown> = { ...data };
       const { data: fault, error } = await supabase
         .from('faults')
-        .update(data)
+        .update(updateData as any)
         .eq('id', id)
         .select()
         .single();

@@ -139,6 +139,7 @@ export type Database = {
       faults: {
         Row: {
           assigned_worker_id: string | null
+          checklist: Json | null
           component_id: string | null
           created_at: string
           custom_fault_type: string | null
@@ -153,6 +154,7 @@ export type Database = {
         }
         Insert: {
           assigned_worker_id?: string | null
+          checklist?: Json | null
           component_id?: string | null
           created_at?: string
           custom_fault_type?: string | null
@@ -167,6 +169,7 @@ export type Database = {
         }
         Update: {
           assigned_worker_id?: string | null
+          checklist?: Json | null
           component_id?: string | null
           created_at?: string
           custom_fault_type?: string | null
