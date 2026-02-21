@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useFaults, useCreateFault, useUpdateFault, useDeleteFault, DbFault } from "@/hooks/useFaults";
+import { useFaults, useCreateFault, useUpdateFault, useDeleteFault, DbFault, PROCUREMENT_CHECKLIST, ChecklistItem } from "@/hooks/useFaults";
 import { useFacilities, useFacilityComponents, DbFacilityComponent } from "@/hooks/useFacilities";
 import { FaultType } from "@/types/facilities";
 import { AlertTriangle, Clock, CheckCircle2, Plus, Zap, Droplets, Shield, Bath, Hammer, Edit, Trash2, HelpCircle, Cuboid } from "lucide-react";
@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateActivityLog } from "@/hooks/useActivityLogs";
@@ -223,10 +225,29 @@ export const FaultsView = () => {
     );
   }
 
+  const handleChecklistToggle = (fault: DbFault, index: number) => {
+    const currentChecklist: ChecklistItem[] = (fault.checklist && fault.checklist.length > 0)
+      ? fault.checklist
+      : PROCUREMENT_CHECKLIST.map(item => ({ ...item }));
+    
+    const updated = currentChecklist.map((item, i) => 
+      i === index ? { ...item, done: !item.done } : item
+    );
+    
+    updateFault.mutate({ id: fault.id, checklist: updated });
+  };
+
   const FaultCard = ({ fault }: { fault: DbFault }) => {
     const displayType = fault.type === 'other' && fault.custom_fault_type 
       ? fault.custom_fault_type 
       : fault.type;
+
+    const checklist: ChecklistItem[] = (fault.checklist && fault.checklist.length > 0)
+      ? fault.checklist
+      : PROCUREMENT_CHECKLIST;
+
+    const doneCount = checklist.filter(i => i.done).length;
+    const progressPercent = Math.round((doneCount / checklist.length) * 100);
     
     return (
       <div className="p-4 rounded-lg border bg-card hover:shadow-sm transition-all">
@@ -251,6 +272,33 @@ export const FaultsView = () => {
               <Clock className="h-3 w-3" />
               <span>{format(new Date(fault.reported_at), 'MMM d, h:mm a')}</span>
             </div>
+
+            {/* Procurement Checklist for in-progress faults */}
+            {fault.status === 'in-progress' && (
+              <div className="mt-3 pt-3 border-t space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Procurement Progress</span>
+                  <span className="text-xs text-muted-foreground">{doneCount}/{checklist.length}</span>
+                </div>
+                <Progress value={progressPercent} className="h-2" />
+                <div className="space-y-1.5 mt-2">
+                  {checklist.map((item, idx) => (
+                    <label
+                      key={idx}
+                      className="flex items-center gap-2 cursor-pointer group"
+                    >
+                      <Checkbox
+                        checked={item.done}
+                        onCheckedChange={() => handleChecklistToggle(fault, idx)}
+                      />
+                      <span className={`text-sm ${item.done ? 'line-through text-muted-foreground' : 'text-foreground'} group-hover:text-primary transition-colors`}>
+                        {idx + 1}. {item.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" onClick={() => openEditFault(fault)}>
