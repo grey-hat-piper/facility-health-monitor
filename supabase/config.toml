@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.sync-google-sheet]
 verify_jwt = false
+
+[functions.sync-attendance-sheet]
+verify_jwt = false

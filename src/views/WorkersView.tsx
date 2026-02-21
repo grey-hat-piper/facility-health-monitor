@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AttendanceSheetSync } from "@/components/dashboard/AttendanceSheetSync";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -298,6 +299,9 @@ export const WorkersView = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Attendance Sheet Sync */}
+      <AttendanceSheetSync />
     </div>
   );
 };
