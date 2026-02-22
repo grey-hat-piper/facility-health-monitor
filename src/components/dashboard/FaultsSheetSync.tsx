@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Loader2 } from "lucide-react";
+import { FileSpreadsheet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const STORAGE_KEY = "attendance_sheet_webhook_url";
+const STORAGE_KEY = "faults_sheet_webhook_url";
 
 const APPS_SCRIPT_TEMPLATE = `// Paste this into Google Apps Script (Extensions > Apps Script)
 // Deploy as Web App (Deploy > New Deployment > Web App, access: "Anyone")
@@ -16,110 +16,98 @@ function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   var data = JSON.parse(e.postData.contents);
   
-  if (data.type !== 'attendance') {
+  if (data.type !== 'faults_tracking') {
     return ContentService.createTextOutput(JSON.stringify({error: 'Unknown type'}))
       .setMimeType(ContentService.MimeType.JSON);
   }
   
-  var sheetName = "Attendance";
+  var sheetName = "Faults Tracking";
   var ws = sheet.getSheetByName(sheetName) || sheet.insertSheet(sheetName);
   
-  var dateCol = -1;
-  var lastCol = ws.getLastColumn();
-  
-  // Check if headers exist
+  // Set headers if empty
   if (ws.getLastRow() === 0 || ws.getRange(1, 1).getValue() === '') {
-    ws.getRange(1, 1).setValue("Name");
-    ws.getRange(1, 2).setValue("Role");
-    ws.getRange(1, 3).setValue("Phone");
-    ws.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#4285f4").setFontColor("#ffffff");
-    lastCol = 3;
+    var headers = [
+      "Date", "Issue", "Location", "Room/Space", "Task Details",
+      "Officer in Charge", "MEMO", "HEAD OF SCHOOL", "ACCOUNTS",
+      "PROCUREMENT", "DIRECTOR", "PAYMENT", "WORK STARTED",
+      "WORK COMPLETED", "FEEDBACK"
+    ];
+    ws.getRange(1, 1, 1, headers.length).setValues([headers]);
+    ws.getRange(1, 1, 1, headers.length)
+      .setFontWeight("bold")
+      .setBackground("#4285f4")
+      .setFontColor("#ffffff")
+      .setHorizontalAlignment("center");
+    ws.setFrozenRows(1);
   }
   
-  // Find or create date column
-  if (lastCol >= 4) {
-    for (var c = 4; c <= lastCol; c++) {
-      if (ws.getRange(1, c).getValue() === data.summary.date) {
-        dateCol = c;
-        break;
-      }
-    }
-  }
-  
-  if (dateCol === -1) {
-    dateCol = Math.max(lastCol + 1, 4);
-    ws.getRange(1, dateCol).setValue(data.summary.date);
-    ws.getRange(1, dateCol).setFontWeight("bold").setBackground("#4285f4").setFontColor("#ffffff");
-  }
-  
-  // Write worker data
+  // Process each fault row
   for (var i = 0; i < data.rows.length; i++) {
-    var row = data.rows[i];
-    var workerRow = -1;
+    var fault = data.rows[i];
+    var existingRow = -1;
     
-    // Find existing worker row
+    // Find existing row by fault ID (stored in column 16 as hidden ref)
     var lastRow = ws.getLastRow();
     for (var r = 2; r <= lastRow; r++) {
-      if (ws.getRange(r, 1).getValue() === row.name) {
-        workerRow = r;
+      var note = ws.getRange(r, 1).getNote();
+      if (note === fault.id) {
+        existingRow = r;
         break;
       }
     }
     
-    if (workerRow === -1) {
-      workerRow = lastRow + 1;
+    var targetRow = existingRow > 0 ? existingRow : lastRow + 1;
+    
+    var rowData = [
+      fault.date,
+      fault.issue,
+      fault.location,
+      fault.room_space,
+      fault.task_details,
+      fault.officer,
+      fault.memo,
+      fault.head_of_school,
+      fault.accounts,
+      fault.procurement,
+      fault.director,
+      fault.payment,
+      fault.work_started,
+      fault.work_completed,
+      fault.feedback
+    ];
+    
+    ws.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+    // Store fault ID as note on date cell for future updates
+    ws.getRange(targetRow, 1).setNote(fault.id);
+    
+    // Color-code status columns (MEMO through WORK COMPLETED: cols 7-14)
+    for (var col = 7; col <= 14; col++) {
+      var val = rowData[col - 1];
+      var cell = ws.getRange(targetRow, col);
+      if (val === 'Done' || (val !== 'Pending' && val !== '' && val !== '-')) {
+        cell.setBackground("#e8f5e9").setFontColor("#2e7d32");
+      } else if (val === 'Pending') {
+        cell.setBackground("#fff3e0").setFontColor("#e65100");
+      } else {
+        cell.setBackground("#ffffff").setFontColor("#000000");
+      }
     }
     
-    ws.getRange(workerRow, 1).setValue(row.name);
-    ws.getRange(workerRow, 2).setValue(row.role);
-    ws.getRange(workerRow, 3).setValue(row.phone);
-    
-    var cell = ws.getRange(workerRow, dateCol);
-    cell.setValue(row.abbreviation);
-    
-    // Color-code matching legend
-    var colorMap = {
-      'P': '#4caf50', 'PH': '#2196f3', 'CL': '#9c27b0', 'A': '#f44336',
-      'PM': '#ff9800', 'AL': '#00bcd4', 'L': '#ff5722', 'H': '#e91e63',
-      'OD': '#3f51b5', 'ML': '#009688', 'RE': '#607d8b'
-    };
-    var bgColor = colorMap[row.abbreviation] || '#e3f2fd';
-    cell.setBackground(bgColor).setFontColor('#ffffff').setFontWeight('bold');
+    // Color-code status by fault status
+    var statusColor = "#ffffff";
+    if (fault.status === 'open') statusColor = "#fce4ec";
+    else if (fault.status === 'in-progress') statusColor = "#fff3e0";
+    else if (fault.status === 'resolved') statusColor = "#e8f5e9";
+    ws.getRange(targetRow, 2).setBackground(statusColor);
   }
   
-  // Add legend sheet with color codes
-  var legendSheet = sheet.getSheetByName("Legend") || sheet.insertSheet("Legend");
-  legendSheet.clear();
-  legendSheet.getRange("A1:B1").setValues([["Code", "Meaning"]]);
-  legendSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#4285f4").setFontColor("#ffffff");
-  var legendData = [
-    ["P", "Present", "#4caf50", "#ffffff"],
-    ["PH", "Public Holiday", "#2196f3", "#ffffff"],
-    ["CL", "Casual Leave", "#9c27b0", "#ffffff"],
-    ["A", "Absent", "#f44336", "#ffffff"],
-    ["PM", "Permission", "#ff9800", "#ffffff"],
-    ["AL", "Annual Leave", "#00bcd4", "#ffffff"],
-    ["L", "Late", "#ff5722", "#ffffff"],
-    ["H", "Hospital", "#e91e63", "#ffffff"],
-    ["OD", "Official Duty", "#3f51b5", "#ffffff"],
-    ["ML", "Maternity Leave", "#009688", "#ffffff"],
-    ["RE", "Resigned", "#607d8b", "#ffffff"]
-  ];
-  for (var li = 0; li < legendData.length; li++) {
-    var row = li + 2;
-    legendSheet.getRange(row, 1).setValue(legendData[li][0]);
-    legendSheet.getRange(row, 2).setValue(legendData[li][1]);
-    legendSheet.getRange(row, 1, 1, 2).setBackground(legendData[li][2]).setFontColor(legendData[li][3]).setFontWeight("bold");
-  }
-  legendSheet.autoResizeColumns(1, 2);
+  ws.autoResizeColumns(1, 15);
   
-  ws.autoResizeColumns(1, dateCol);
-  
-  return ContentService.createTextOutput(JSON.stringify({success: true}))
+  return ContentService.createTextOutput(JSON.stringify({success: true, count: data.rows.length}))
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-export const AttendanceSheetSync = () => {
+export const FaultsSheetSync = () => {
   const [webhookUrl, setWebhookUrlState] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -142,14 +130,14 @@ export const AttendanceSheetSync = () => {
 
     setIsSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("sync-attendance-sheet", {
+      const { data, error } = await supabase.functions.invoke("sync-faults-sheet", {
         body: { webhookUrl },
       });
       if (error) throw new Error(error.message);
 
       toast({
-        title: "Attendance Synced",
-        description: `${data?.summary?.total} workers synced for ${data?.summary?.date}`,
+        title: "Faults Synced",
+        description: `${data?.summary?.total} faults synced to Google Sheets`,
       });
     } catch (err: any) {
       toast({
@@ -166,8 +154,8 @@ export const AttendanceSheetSync = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <ClipboardList className="h-5 w-5 text-primary" />
-          Daily Attendance Sheet Sync
+          <FileSpreadsheet className="h-5 w-5 text-primary" />
+          Faults Tracking Sheet Sync
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -179,14 +167,14 @@ export const AttendanceSheetSync = () => {
             onChange={(e) => handleUrlChange(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Syncs current worker presence as daily attendance (P, PH, CL, A, PM, AL, L, H, OD, ML, RE).
+            Syncs all faults with procurement checklist progress to Google Sheets.
           </p>
         </div>
 
         <div className="flex gap-2">
           <Button onClick={handleSync} disabled={isSyncing} className="gap-2">
-            {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
-            {isSyncing ? "Syncing..." : "Sync Attendance"}
+            {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+            {isSyncing ? "Syncing..." : "Sync Faults"}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowScript(!showScript)}>
             {showScript ? "Hide" : "Show"} Setup Script
