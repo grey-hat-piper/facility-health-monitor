@@ -12,7 +12,10 @@ import {
 } from "lucide-react";
 import { useFaults } from "@/hooks/useFaults";
 import { useFacilities } from "@/hooks/useFacilities";
-import { exportFaultSummaryExcel } from "@/lib/exportFaultSummary";
+import { useWorkers } from "@/hooks/useWorkers";
+import { useReports } from "@/hooks/useReports";
+import { useStats } from "@/hooks/useStats";
+import { exportFullReportExcel } from "@/lib/exportFaultSummary";
 import { useToast } from "@/hooks/use-toast";
 
 interface SidebarProps {
@@ -33,15 +36,24 @@ const navItems = [
 export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const { data: faults } = useFaults();
   const { data: facilities } = useFacilities();
+  const { data: workers } = useWorkers();
+  const { data: reports } = useReports();
+  const { data: stats } = useStats(30);
   const { toast } = useToast();
 
   const handleExport = () => {
-    if (!faults || !facilities) {
+    if (!faults || !facilities || !workers || !reports) {
       toast({ title: "Data not ready", description: "Please wait for data to load.", variant: "destructive" });
       return;
     }
-    exportFaultSummaryExcel(faults, facilities);
-    toast({ title: "Report downloaded", description: "Fault summary Excel file has been downloaded." });
+    exportFullReportExcel({
+      faults,
+      facilities,
+      workers,
+      reports,
+      stats: stats || [],
+    });
+    toast({ title: "Report downloaded", description: "Full facility report Excel file has been downloaded." });
   };
 
   return (
@@ -66,7 +78,7 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       <div className="p-4 border-t">
         <Button variant="outline" className="w-full gap-2" onClick={handleExport}>
           <FileSpreadsheet className="h-4 w-4" />
-          Download Fault Report
+          Download Full Report
         </Button>
       </div>
     </aside>

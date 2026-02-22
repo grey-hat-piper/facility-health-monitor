@@ -85,18 +85,30 @@ function doPost(e) {
     else cell.setBackground("#e3f2fd");
   }
   
-  // Add legend sheet
+  // Add legend sheet with color codes
   var legendSheet = sheet.getSheetByName("Legend") || sheet.insertSheet("Legend");
   legendSheet.clear();
   legendSheet.getRange("A1:B1").setValues([["Code", "Meaning"]]);
   legendSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#4285f4").setFontColor("#ffffff");
   var legendData = [
-    ["P", "Present"], ["PH", "Public Holiday"], ["CL", "Casual Leave"],
-    ["A", "Absent"], ["PM", "Permission"], ["AL", "Annual Leave"],
-    ["L", "Late"], ["H", "Hospital"], ["OD", "Official Duty"],
-    ["ML", "Maternity Leave"], ["RE", "Resigned"]
+    ["P", "Present", "#e8f5e9"],
+    ["PH", "Public Holiday", "#e3f2fd"],
+    ["CL", "Casual Leave", "#e3f2fd"],
+    ["A", "Absent", "#fce4ec"],
+    ["PM", "Permission", "#e3f2fd"],
+    ["AL", "Annual Leave", "#e3f2fd"],
+    ["L", "Late", "#fff3e0"],
+    ["H", "Hospital", "#e3f2fd"],
+    ["OD", "Official Duty", "#e3f2fd"],
+    ["ML", "Maternity Leave", "#e3f2fd"],
+    ["RE", "Resigned", "#f5f5f5"]
   ];
-  legendSheet.getRange(2, 1, legendData.length, 2).setValues(legendData);
+  for (var li = 0; li < legendData.length; li++) {
+    var row = li + 2;
+    legendSheet.getRange(row, 1).setValue(legendData[li][0]);
+    legendSheet.getRange(row, 2).setValue(legendData[li][1]);
+    legendSheet.getRange(row, 1, 1, 2).setBackground(legendData[li][2]);
+  }
   legendSheet.autoResizeColumns(1, 2);
   
   ws.autoResizeColumns(1, dateCol);
