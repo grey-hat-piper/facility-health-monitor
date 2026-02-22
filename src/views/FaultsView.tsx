@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateActivityLog } from "@/hooks/useActivityLogs";
 import { useAuth } from "@/contexts/AuthContext";
+import { FaultsSheetSync } from "@/components/dashboard/FaultsSheetSync";
 
 const faultIcons: Record<FaultType, React.ReactNode> = {
   electrical: <Zap className="h-4 w-4" />,
@@ -315,6 +316,9 @@ export const FaultsView = () => {
 
   return (
     <div className="space-y-6">
+      {/* Google Sheets Sync */}
+      <FaultsSheetSync />
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Faults</h2>
