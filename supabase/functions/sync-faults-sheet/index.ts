@@ -53,11 +53,11 @@ Deno.serve(async (req) => {
     if (faultsErr) throw faultsErr;
 
     // Fetch facilities, components, and app_users for name resolution
-    const { data: facilities } = await supabase.from('facilities').select('id, name');
+    const { data: facilities } = await supabase.from('facilities').select('id, name, location');
     const { data: components } = await supabase.from('facility_components').select('id, name, facility_id');
     const { data: appUsers } = await supabase.from('app_users').select('id, username');
 
-    const facilityMap = Object.fromEntries((facilities || []).map((f: any) => [f.id, f.name]));
+    const facilityMap = Object.fromEntries((facilities || []).map((f: any) => [f.id, { name: f.name, location: f.location }]));
     const componentMap = Object.fromEntries((components || []).map((c: any) => [c.id, c.name]));
     const userMap = Object.fromEntries((appUsers || []).map((u: any) => [u.id, u.username]));
 
@@ -82,9 +82,11 @@ Deno.serve(async (req) => {
       };
 
       const faultType = f.type === 'other' && f.custom_fault_type ? f.custom_fault_type : f.type;
-      const facilityName = facilityMap[f.facility_id] || f.facility_id;
+      const facility = facilityMap[f.facility_id] || { name: f.facility_id, location: '' };
+      const facilityName = facility.name;
+      const facilityLocation = facility.location || '';
       const componentName = f.component_id ? (componentMap[f.component_id] || '') : '';
-      const roomSpace = componentName ? `${facilityName}, ${componentName}` : facilityName;
+      const roomSpace = [facilityName, componentName].filter(Boolean).join(', ');
 
       // Work Started / Work Completed - use updated_at for resolved faults
       const workStartedItem = checklist.find((c: ChecklistItem) => c.label === 'Work Started');
@@ -97,7 +99,7 @@ Deno.serve(async (req) => {
         id: f.id,
         date: new Date(f.reported_at).toISOString().split('T')[0],
         issue: faultType,
-        location: facilityName,
+        location: facilityLocation,
         room_space: roomSpace,
         task_details: f.description || '',
         officer: f.assigned_worker_id ? (userMap[f.assigned_worker_id] || '') : '',

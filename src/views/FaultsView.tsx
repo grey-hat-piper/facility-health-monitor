@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFaults, useCreateFault, useUpdateFault, useDeleteFault, DbFault, PROCUREMENT_CHECKLIST, ChecklistItem } from "@/hooks/useFaults";
 import { useFacilities, useFacilityComponents, DbFacilityComponent } from "@/hooks/useFacilities";
 import { FaultType } from "@/types/facilities";
-import { AlertTriangle, Clock, CheckCircle2, Plus, Zap, Droplets, Shield, Bath, Hammer, Edit, Trash2, HelpCircle, Cuboid } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,39 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
-import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateActivityLog } from "@/hooks/useActivityLogs";
 import { useAuth } from "@/contexts/AuthContext";
 import { FaultsSheetSync } from "@/components/dashboard/FaultsSheetSync";
-
-const faultIcons: Record<FaultType, React.ReactNode> = {
-  electrical: <Zap className="h-4 w-4" />,
-  plumbing: <Droplets className="h-4 w-4" />,
-  security: <Shield className="h-4 w-4" />,
-  sanitary: <Bath className="h-4 w-4" />,
-  carpentry: <Hammer className="h-4 w-4" />,
-  masonry: <Cuboid className="h-4 w-4" />,
-  other: <HelpCircle className="h-4 w-4" />,
-};
-
-const faultColors: Record<FaultType, string> = {
-  electrical: 'bg-amber-500',
-  plumbing: 'bg-blue-500',
-  security: 'bg-purple-500',
-  sanitary: 'bg-emerald-500',
-  carpentry: 'bg-orange-500',
-  masonry: 'bg-stone-500',
-  other: 'bg-gray-500',
-};
-
-const statusVariants: Record<string, 'critical' | 'warning' | 'healthy'> = {
-  'open': 'critical',
-  'in-progress': 'warning',
-  'resolved': 'healthy',
-};
+import { FaultCard } from "@/components/dashboard/FaultCard";
 
 export const FaultsView = () => {
   const { data: faults, isLoading: faultsLoading } = useFaults();
@@ -70,10 +42,8 @@ export const FaultsView = () => {
     custom_fault_type: '',
   });
 
-  // Fetch components for the selected facility in the form
   const { data: formComponents } = useFacilityComponents(formData.facility_id || null);
 
-  // Fetch all components for location display
   const { data: allComponents } = useQuery({
     queryKey: ['all_facility_components'],
     queryFn: async () => {
@@ -100,6 +70,35 @@ export const FaultsView = () => {
     });
   };
 
+  const getFacilityName = (facilityId: string) => {
+    return facilities?.find(f => f.id === facilityId)?.name || 'Unknown';
+  };
+
+  const getFacilityLocation = (facilityId: string) => {
+    return facilities?.find(f => f.id === facilityId)?.location || '';
+  };
+
+  const getFacilityDisplayName = (facilityId: string) => {
+    const facility = facilities?.find(f => f.id === facilityId);
+    if (!facility) return 'Unknown';
+    return `${facility.name}, ${facility.location}`;
+  };
+
+  const getComponentName = (componentId: string | null) => {
+    if (!componentId) return null;
+    return allComponents?.find(c => c.id === componentId)?.name || null;
+  };
+
+  const getLocationDisplay = (facilityId: string, componentId: string | null) => {
+    const facility = facilities?.find(f => f.id === facilityId);
+    const facilityName = facility?.name || 'Unknown';
+    const facilityLocation = facility?.location || '';
+    const componentName = getComponentName(componentId);
+    
+    const parts = [facilityName, facilityLocation, componentName].filter(Boolean);
+    return parts.map(p => p!.toUpperCase()).join(', ');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.facility_id || !formData.type) return;
@@ -118,7 +117,6 @@ export const FaultsView = () => {
         setIsDialogOpen(false);
         resetForm();
         
-        // Log activity
         createActivityLog.mutate({
           event_type: 'fault_created',
           event_description: `New ${formData.type} fault reported at ${facilityName}${componentName ? `, ${componentName}` : ''}: ${formData.description.substring(0, 50)}...`,
@@ -127,7 +125,6 @@ export const FaultsView = () => {
           created_by: user?.username,
         });
 
-        // Send email notification to all users
         try {
           await supabase.functions.invoke('notify-fault', {
             body: {
@@ -138,7 +135,6 @@ export const FaultsView = () => {
               reportedBy: user?.username,
             },
           });
-          console.log('Notification sent to all users');
         } catch (error) {
           console.error('Failed to send notifications:', error);
         }
@@ -156,7 +152,6 @@ export const FaultsView = () => {
       status: formData.status,
     }, {
       onSuccess: () => {
-        // Log activity
         createActivityLog.mutate({
           event_type: 'fault_updated',
           event_description: `Fault status changed to ${formData.status} at ${getFacilityName(editingFault.facility_id)}`,
@@ -189,22 +184,16 @@ export const FaultsView = () => {
     setDeleteConfirm(null);
   };
 
-  const getFacilityName = (facilityId: string) => {
-    return facilities?.find(f => f.id === facilityId)?.name || 'Unknown';
-  };
-
-  const getComponentName = (componentId: string | null) => {
-    if (!componentId) return null;
-    return allComponents?.find(c => c.id === componentId)?.name || null;
-  };
-
-  const getLocationDisplay = (facilityId: string, componentId: string | null) => {
-    const facilityName = getFacilityName(facilityId);
-    const componentName = getComponentName(componentId);
-    if (componentName) {
-      return `${facilityName?.toUpperCase()}, ${componentName.toUpperCase()}`;
-    }
-    return facilityName;
+  const handleChecklistToggle = (fault: DbFault, index: number) => {
+    const currentChecklist: ChecklistItem[] = (fault.checklist && fault.checklist.length > 0)
+      ? fault.checklist
+      : PROCUREMENT_CHECKLIST.map(item => ({ ...item }));
+    
+    const updated = currentChecklist.map((item, i) => 
+      i === index ? { ...item, done: !item.done } : item
+    );
+    
+    updateFault.mutate({ id: fault.id, checklist: updated });
   };
 
   const isLoading = faultsLoading || facilitiesLoading;
@@ -226,97 +215,8 @@ export const FaultsView = () => {
     );
   }
 
-  const handleChecklistToggle = (fault: DbFault, index: number) => {
-    const currentChecklist: ChecklistItem[] = (fault.checklist && fault.checklist.length > 0)
-      ? fault.checklist
-      : PROCUREMENT_CHECKLIST.map(item => ({ ...item }));
-    
-    const updated = currentChecklist.map((item, i) => 
-      i === index ? { ...item, done: !item.done } : item
-    );
-    
-    updateFault.mutate({ id: fault.id, checklist: updated });
-  };
-
-  const FaultCard = ({ fault }: { fault: DbFault }) => {
-    const displayType = fault.type === 'other' && fault.custom_fault_type 
-      ? fault.custom_fault_type 
-      : fault.type;
-
-    const checklist: ChecklistItem[] = (fault.checklist && fault.checklist.length > 0)
-      ? fault.checklist
-      : PROCUREMENT_CHECKLIST;
-
-    const doneCount = checklist.filter(i => i.done).length;
-    const progressPercent = Math.round((doneCount / checklist.length) * 100);
-    
-    return (
-      <div className="p-4 rounded-lg border bg-card hover:shadow-sm transition-all">
-        <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-lg text-primary-foreground ${faultColors[fault.type]}`}>
-            {faultIcons[fault.type]}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium text-sm capitalize">{displayType}</span>
-              <Badge variant={statusVariants[fault.status]} className="text-xs capitalize">
-                {fault.status.replace('-', ' ')}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {fault.description}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              📍 {getLocationDisplay(fault.facility_id, fault.component_id)}
-            </p>
-            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>{format(new Date(fault.reported_at), 'MMM d, h:mm a')}</span>
-            </div>
-
-            {/* Procurement Checklist for in-progress faults */}
-            {fault.status === 'in-progress' && (
-              <div className="mt-3 pt-3 border-t space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Procurement Progress</span>
-                  <span className="text-xs text-muted-foreground">{doneCount}/{checklist.length}</span>
-                </div>
-                <Progress value={progressPercent} className="h-2" />
-                <div className="space-y-1.5 mt-2">
-                  {checklist.map((item, idx) => (
-                    <label
-                      key={idx}
-                      className="flex items-center gap-2 cursor-pointer group"
-                    >
-                      <Checkbox
-                        checked={item.done}
-                        onCheckedChange={() => handleChecklistToggle(fault, idx)}
-                      />
-                      <span className={`text-sm ${item.done ? 'line-through text-muted-foreground' : 'text-foreground'} group-hover:text-primary transition-colors`}>
-                        {idx + 1}. {item.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => openEditFault(fault)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(fault.id)}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
-      {/* Google Sheets Sync */}
       <FaultsSheetSync />
 
       <div className="flex items-center justify-between">
@@ -346,7 +246,7 @@ export const FaultsView = () => {
                   <SelectContent>
                     {facilities?.map(facility => (
                       <SelectItem key={facility.id} value={facility.id}>
-                        {facility.name}
+                        {facility.name}, {facility.location}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -489,7 +389,13 @@ export const FaultsView = () => {
           ) : (
             openFaults.map((fault, index) => (
               <div key={fault.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                <FaultCard fault={fault} />
+                <FaultCard
+                  fault={fault}
+                  locationDisplay={getLocationDisplay(fault.facility_id, fault.component_id)}
+                  onEdit={openEditFault}
+                  onDelete={setDeleteConfirm}
+                  onChecklistToggle={handleChecklistToggle}
+                />
               </div>
             ))
           )}
@@ -505,7 +411,13 @@ export const FaultsView = () => {
           ) : (
             inProgressFaults.map((fault, index) => (
               <div key={fault.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                <FaultCard fault={fault} />
+                <FaultCard
+                  fault={fault}
+                  locationDisplay={getLocationDisplay(fault.facility_id, fault.component_id)}
+                  onEdit={openEditFault}
+                  onDelete={setDeleteConfirm}
+                  onChecklistToggle={handleChecklistToggle}
+                />
               </div>
             ))
           )}
@@ -521,7 +433,13 @@ export const FaultsView = () => {
           ) : (
             resolvedFaults.map((fault, index) => (
               <div key={fault.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                <FaultCard fault={fault} />
+                <FaultCard
+                  fault={fault}
+                  locationDisplay={getLocationDisplay(fault.facility_id, fault.component_id)}
+                  onEdit={openEditFault}
+                  onDelete={setDeleteConfirm}
+                  onChecklistToggle={handleChecklistToggle}
+                />
               </div>
             ))
           )}
