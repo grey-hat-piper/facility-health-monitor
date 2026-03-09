@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
         id: f.id,
         date: new Date(f.reported_at).toISOString().split('T')[0],
         issue: faultType,
-        location: facilityName,
+        location: facilityLocation,
         room_space: roomSpace,
         task_details: f.description || '',
         officer: f.assigned_worker_id ? (userMap[f.assigned_worker_id] || '') : '',
