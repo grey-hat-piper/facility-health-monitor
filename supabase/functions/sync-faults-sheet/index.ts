@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const { data: components } = await supabase.from('facility_components').select('id, name, facility_id');
     const { data: appUsers } = await supabase.from('app_users').select('id, username');
 
-    const facilityMap = Object.fromEntries((facilities || []).map((f: any) => [f.id, f.name]));
+    const facilityMap = Object.fromEntries((facilities || []).map((f: any) => [f.id, { name: f.name, location: f.location }]));
     const componentMap = Object.fromEntries((components || []).map((c: any) => [c.id, c.name]));
     const userMap = Object.fromEntries((appUsers || []).map((u: any) => [u.id, u.username]));
 
