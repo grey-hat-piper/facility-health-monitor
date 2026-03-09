@@ -82,9 +82,11 @@ Deno.serve(async (req) => {
       };
 
       const faultType = f.type === 'other' && f.custom_fault_type ? f.custom_fault_type : f.type;
-      const facilityName = facilityMap[f.facility_id] || f.facility_id;
+      const facility = facilityMap[f.facility_id] || { name: f.facility_id, location: '' };
+      const facilityName = facility.name;
+      const facilityLocation = facility.location || '';
       const componentName = f.component_id ? (componentMap[f.component_id] || '') : '';
-      const roomSpace = componentName ? `${facilityName}, ${componentName}` : facilityName;
+      const roomSpace = [facilityName, componentName].filter(Boolean).join(', ');
 
       // Work Started / Work Completed - use updated_at for resolved faults
       const workStartedItem = checklist.find((c: ChecklistItem) => c.label === 'Work Started');
