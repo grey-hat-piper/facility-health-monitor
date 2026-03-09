@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     if (faultsErr) throw faultsErr;
 
     // Fetch facilities, components, and app_users for name resolution
-    const { data: facilities } = await supabase.from('facilities').select('id, name');
+    const { data: facilities } = await supabase.from('facilities').select('id, name, location');
     const { data: components } = await supabase.from('facility_components').select('id, name, facility_id');
     const { data: appUsers } = await supabase.from('app_users').select('id, username');
 
